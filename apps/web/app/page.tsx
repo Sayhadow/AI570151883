@@ -5,9 +5,12 @@ import {
   ImagePlus,
   KeyRound,
   LayoutTemplate,
+  LogIn,
   ShieldCheck,
+  UserPlus,
   Workflow
 } from "lucide-react";
+import Link from "next/link";
 
 const modules = [
   { title: "邀请码注册", status: "下一步", icon: KeyRound },
@@ -42,6 +45,22 @@ export default function HomePage() {
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
               当前先完成本地开发地基：Next.js 前台、NestJS API、BullMQ Worker、PostgreSQL、Redis 和对象存储。
             </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground"
+              href="/register"
+            >
+              <UserPlus className="h-4 w-4" aria-hidden="true" />
+              邀请码注册
+            </Link>
+            <Link
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-white px-4 text-sm font-semibold"
+              href="/login"
+            >
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              登录
+            </Link>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <StatusTile label="Web" value="Next.js" detail="用户前台 + 管理后台" />
@@ -121,4 +140,3 @@ function ServiceRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

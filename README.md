@@ -21,6 +21,7 @@ corepack pnpm install
 docker compose up -d
 corepack pnpm db:generate
 corepack pnpm db:migrate
+corepack pnpm db:seed
 corepack pnpm dev
 ```
 
@@ -29,6 +30,40 @@ Default local URLs:
 - Web: http://localhost:3000
 - API: http://localhost:4000
 - MinIO console: http://localhost:9001
+
+## Seed data
+
+`corepack pnpm db:seed` creates:
+
+- Admin email: `admin@example.com`
+- Admin password: `Admin12345`
+- Initial invite code: `INTERNAL-TEST-2026`
+
+You can override these with:
+
+```bash
+SEED_ADMIN_EMAIL=owner@example.com SEED_ADMIN_PASSWORD=change-me SEED_INVITE_CODE=YOUR-CODE corepack pnpm db:seed
+```
+
+## Phase 2 auth routes
+
+API:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `POST /api/auth/agreement/accept`
+- `GET /api/admin/invite-codes`
+- `POST /api/admin/invite-codes`
+
+Web:
+
+- `/register`
+- `/login`
+- `/agreement`
+- `/dashboard`
+- `/admin/invite-codes`
 
 ## MVP build order
 
