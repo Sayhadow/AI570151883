@@ -97,7 +97,39 @@ export interface GenerationTaskPayload {
   taskId: string;
   userId: string;
   prompt: string;
+  negativePrompt: string | null;
   referenceAssetIds: string[];
   provider: AiProviderKey;
   pointHoldTransactionId: string;
+}
+
+export interface GenerationAssetSummary {
+  id: string;
+  kind: "reference" | "result" | "template_cover";
+  bucket: string;
+  objectKey: string;
+  mimeType: string;
+  width: number | null;
+  height: number | null;
+  createdAt: string;
+}
+
+export interface GenerationTaskSummary {
+  id: string;
+  prompt: string;
+  negativePrompt: string | null;
+  status: GenerationStatus;
+  provider: AiProviderKey;
+  pointCost: number;
+  errorMessage: string | null;
+  queuedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  assets: GenerationAssetSummary[];
+}
+
+export interface CreateGenerationTaskResponse {
+  task: GenerationTaskSummary;
+  pointHoldTransaction: PointTransactionSummary;
 }

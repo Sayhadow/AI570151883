@@ -73,6 +73,16 @@ The API points service also exposes internal methods for the upcoming generation
 - `captureGenerationHold(holdTransactionId, reason?)`
 - `refundGenerationHold(holdTransactionId, reason?)`
 
+## Phase 4 generation routes
+
+API:
+
+- `POST /api/generation-tasks`
+- `GET /api/generation-tasks`
+- `GET /api/generation-tasks/:taskId`
+
+The dashboard can create mock generation tasks. Creating a task reserves points, enqueues a BullMQ job, and the worker moves the task through `queued -> processing -> succeeded`. Prompts containing `[fail]` intentionally exercise the failure path and refund the held points.
+
 Web:
 
 - `/register`

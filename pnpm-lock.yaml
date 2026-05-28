@@ -38,6 +38,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^10.4.15
         version: 10.4.22(@nestjs/common@10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)
+      bullmq:
+        specifier: ^5.34.2
+        version: 5.77.6
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -121,6 +124,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@ai-image/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@ai-image/shared':
         specifier: workspace:*
         version: link:../../packages/shared

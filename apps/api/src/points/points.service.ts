@@ -127,60 +127,73 @@ export class PointsService {
     const normalizedAmount = this.normalizePositiveAmount(amount);
     const normalizedReason = this.normalizeReason(reason) ?? "Generation point hold";
 
-    return this.prisma.$transaction(async (tx) => {
-      const existingHold = await tx.pointTransaction.findFirst({
-        where: {
-          userId,
-          taskId,
-          type: PointTransactionType.GENERATION_HOLD,
-          status: PointTransactionStatus.PENDING
-        }
-      });
+    return this.prisma.$transaction((tx) =>
+      this.reserveGenerationPointsInTransaction(tx, userId, taskId, normalizedAmount, normalizedReason)
+    );
+  }
 
-      if (existingHold) {
-        return this.toTransactionSummary(existingHold);
+  async reserveGenerationPointsInTransaction(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    taskId: string,
+    amount: number,
+    reason = "Generation point hold"
+  ) {
+    const normalizedAmount = this.normalizePositiveAmount(amount);
+    const normalizedReason = this.normalizeReason(reason) ?? "Generation point hold";
+
+    const existingHold = await tx.pointTransaction.findFirst({
+      where: {
+        userId,
+        taskId,
+        type: PointTransactionType.GENERATION_HOLD,
+        status: PointTransactionStatus.PENDING
       }
-
-      await tx.userBalance.upsert({
-        where: { userId },
-        update: {},
-        create: { userId, available: 0, held: 0 }
-      });
-
-      const updateResult = await tx.userBalance.updateMany({
-        where: {
-          userId,
-          available: { gte: normalizedAmount }
-        },
-        data: {
-          available: { decrement: normalizedAmount },
-          held: { increment: normalizedAmount }
-        }
-      });
-
-      if (updateResult.count !== 1) {
-        throw new BadRequestException("Insufficient points");
-      }
-
-      const balance = await tx.userBalance.findUniqueOrThrow({
-        where: { userId }
-      });
-
-      const transaction = await tx.pointTransaction.create({
-        data: {
-          userId,
-          taskId,
-          type: PointTransactionType.GENERATION_HOLD,
-          status: PointTransactionStatus.PENDING,
-          amount: -normalizedAmount,
-          balanceAfter: balance.available,
-          heldAfter: balance.held,
-          reason: normalizedReason
-        }
-      });
-
-      return this.toTransactionSummary(transaction);
     });
+
+    if (existingHold) {
+      return this.toTransactionSummary(existingHold);
+    }
+
+    await tx.userBalance.upsert({
+      where: { userId },
+      update: {},
+      create: { userId, available: 0, held: 0 }
+    });
+
+    const updateResult = await tx.userBalance.updateMany({
+      where: {
+        userId,
+        available: { gte: normalizedAmount }
+      },
+      data: {
+        available: { decrement: normalizedAmount },
+        held: { increment: normalizedAmount }
+      }
+    });
+
+    if (updateResult.count !== 1) {
+      throw new BadRequestException("Insufficient points");
+    }
+
+    const balance = await tx.userBalance.findUniqueOrThrow({
+      where: { userId }
+    });
+
+    const transaction = await tx.pointTransaction.create({
+      data: {
+        userId,
+        taskId,
+        type: PointTransactionType.GENERATION_HOLD,
+        status: PointTransactionStatus.PENDING,
+        amount: -normalizedAmount,
+        balanceAfter: balance.available,
+        heldAfter: balance.held,
+        reason: normalizedReason
+      }
+    });
+
+    return this.toTransactionSummary(transaction);
   }
 
   async captureGenerationHold(holdTransactionId: string, reason?: string) {
