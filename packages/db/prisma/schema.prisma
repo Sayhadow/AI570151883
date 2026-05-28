@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum InviteCodeStatus {
+  ACTIVE
+  USED
+  DISABLED
+  EXPIRED
+}
+
+enum AgreementStatus {
+  PENDING
+  ACCEPTED
+}
+
+enum TaskStatus {
+  DRAFT
+  QUEUED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum AssetKind {
+  REFERENCE
+  RESULT
+  TEMPLATE_COVER
+}
+
+enum PointTransactionType {
+  ADMIN_GRANT
+  GENERATION_HOLD
+  GENERATION_CAPTURE
+  GENERATION_REFUND
+  ADJUSTMENT
+}
+
+enum PointTransactionStatus {
+  PENDING
+  COMMITTED
+  REVERSED
+  FAILED
+}
+
+enum ProviderKey {
+  MOCK
+  PROVIDER_A
+  PROVIDER_B
+}
+
+model User {
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  displayName         String?
+  passwordHash        String
+  role                UserRole           @default(USER)
+  agreementStatus     AgreementStatus    @default(PENDING)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  inviteCodeId        String?
+  inviteCode          InviteCode?        @relation(fields: [inviteCodeId], references: [id])
+  balance             UserBalance?
+  sessions            Session[]
+  pointTransactions   PointTransaction[]
+  generationTasks     GenerationTask[]
+  assets              Asset[]
+  adminLogs           AdminLog[]         @relation("AdminActor")
+}
+
+model InviteCode {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  status      InviteCodeStatus @default(ACTIVE)
+  maxUses     Int              @default(1)
+  usedCount   Int              @default(0)
+  expiresAt   DateTime?
+  note        String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       User[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String   @unique
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserBalance {
+  userId      String   @id
+  available   Int      @default(0)
+  held        Int      @default(0)
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PointTransaction {
+  id                  String                  @id @default(cuid())
+  userId              String
+  taskId              String?
+  type                PointTransactionType
+  status              PointTransactionStatus  @default(PENDING)
+  amount              Int
+  balanceAfter        Int?
+  reason              String?
+  createdAt           DateTime                @default(now())
+  committedAt         DateTime?
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task                GenerationTask?         @relation(fields: [taskId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([taskId])
+}
+
+model GenerationTask {
+  id                   String             @id @default(cuid())
+  userId               String
+  templateId           String?
+  prompt               String
+  negativePrompt       String?
+  params               Json               @default("{}")
+  status               TaskStatus         @default(DRAFT)
+  provider             ProviderKey        @default(MOCK)
+  providerTaskId       String?
+  pointCost            Int
+  errorMessage         String?
+  queuedAt             DateTime?
+  startedAt            DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template             Template?          @relation(fields: [templateId], references: [id])
+  assets               Asset[]
+  pointTransactions    PointTransaction[]
+  providerCalls        ProviderCallLog[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model Asset {
+  id            String          @id @default(cuid())
+  userId        String?
+  taskId        String?
+  templateId    String?
+  kind          AssetKind
+  bucket        String
+  objectKey     String
+  mimeType      String
+  width         Int?
+  height        Int?
+  sizeBytes     Int?
+  createdAt     DateTime        @default(now())
+  user          User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  task          GenerationTask? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  template      Template?       @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([taskId])
+  @@index([userId, createdAt])
+}
+
+model Template {
+  id             String           @id @default(cuid())
+  title          String
+  description    String?
+  prompt         String
+  negativePrompt String?
+  defaultParams  Json             @default("{}")
+  isPublished    Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  tasks          GenerationTask[]
+  assets         Asset[]
+}
+
+model ProviderCallLog {
+  id             String          @id @default(cuid())
+  taskId         String
+  provider       ProviderKey
+  requestMeta    Json            @default("{}")
+  responseMeta   Json            @default("{}")
+  statusCode     Int?
+  durationMs     Int?
+  errorMessage   String?
+  createdAt      DateTime        @default(now())
+  task           GenerationTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+  @@index([provider, createdAt])
+}
+
+model AdminLog {
+  id          String    @id @default(cuid())
+  actorId     String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metadata    Json      @default("{}")
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+  actor       User?     @relation("AdminActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model SystemSetting {
+  key        String   @id
+  value      Json
+  updatedAt  DateTime @updatedAt
+}
+
