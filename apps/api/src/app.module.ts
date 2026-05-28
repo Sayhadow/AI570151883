@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { AdminOpsModule } from "./admin-ops/admin-ops.module.js";
 import { AssetsModule } from "./assets/assets.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { GenerationTasksModule } from "./generation-tasks/generation-tasks.module.js";
@@ -18,7 +19,8 @@ import { PrismaModule } from "./prisma/prisma.module.js";
     InviteCodesModule,
     PointsModule,
     GenerationTasksModule,
-    AssetsModule
+    AssetsModule,
+    AdminOpsModule
   ],
   controllers: [HealthController]
 })

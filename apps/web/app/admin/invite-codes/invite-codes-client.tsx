@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, RefreshCw } from "lucide-react";
+import { DatabaseZap, Plus, RefreshCw } from "lucide-react";
 import type { InviteCodeSummary } from "@ai-image/shared";
 import { apiRequest } from "../../../lib/api";
 
@@ -58,9 +58,15 @@ export function InviteCodesClient() {
             <p className="text-sm font-semibold text-primary">后台管理</p>
             <h1 className="mt-1 text-2xl font-semibold">邀请码</h1>
           </div>
-          <Link className="text-sm font-semibold text-primary" href="/dashboard">
-            返回控制台
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link className="text-sm font-semibold text-primary" href="/admin/tasks">
+              <DatabaseZap className="mr-1 inline h-4 w-4" aria-hidden="true" />
+              任务日志
+            </Link>
+            <Link className="text-sm font-semibold text-primary" href="/dashboard">
+              返回控制台
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -127,4 +133,3 @@ export function InviteCodesClient() {
     </main>
   );
 }
-

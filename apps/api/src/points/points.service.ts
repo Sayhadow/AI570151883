@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import {
   AgreementStatus,
+  GenerationTask,
   PointTransaction,
   PointTransactionStatus,
   PointTransactionType,
@@ -24,6 +25,11 @@ interface GrantPointsInput {
 
 type UserWithBalance = User & {
   balance: UserBalance | null;
+  generationTasks?: Pick<GenerationTask, "createdAt">[];
+  _count?: {
+    generationTasks: number;
+    assets: number;
+  };
 };
 
 @Injectable()
@@ -47,7 +53,20 @@ export class PointsService {
 
   async listAdminUsers(): Promise<AdminUserSummary[]> {
     const users = await this.prisma.user.findMany({
-      include: { balance: true },
+      include: {
+        balance: true,
+        generationTasks: {
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 1
+        },
+        _count: {
+          select: {
+            generationTasks: true,
+            assets: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
       take: 100
     });
@@ -371,6 +390,9 @@ export class PointsService {
       agreementStatus: user.agreementStatus === AgreementStatus.ACCEPTED ? "accepted" : "pending",
       pointsAvailable: user.balance?.available ?? 0,
       pointsHeld: user.balance?.held ?? 0,
+      generationTaskCount: user._count?.generationTasks ?? 0,
+      resultAssetCount: user._count?.assets ?? 0,
+      lastTaskAt: user.generationTasks?.[0]?.createdAt.toISOString() ?? null,
       createdAt: user.createdAt.toISOString()
     };
   }

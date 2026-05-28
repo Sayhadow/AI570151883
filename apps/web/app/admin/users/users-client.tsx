@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Coins, RefreshCw } from "lucide-react";
+import { ArrowLeft, Coins, DatabaseZap, RefreshCw } from "lucide-react";
 import type { AdminPointGrantResponse, AdminUserSummary } from "@ai-image/shared";
 import { apiRequest } from "../../../lib/api";
 
@@ -65,10 +65,16 @@ export function AdminUsersClient() {
             <p className="text-sm font-semibold text-primary">后台管理</p>
             <h1 className="mt-1 text-2xl font-semibold">用户与充值</h1>
           </div>
-          <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/dashboard">
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            返回控制台
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/dashboard">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              返回控制台
+            </Link>
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/admin/tasks">
+              <DatabaseZap className="h-4 w-4" aria-hidden="true" />
+              任务日志
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -87,7 +93,7 @@ export function AdminUsersClient() {
           {message ? <p className="mt-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">{message}</p> : null}
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse text-sm">
+            <table className="w-full min-w-[1120px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="py-3 pr-4 font-medium">用户</th>
@@ -95,6 +101,8 @@ export function AdminUsersClient() {
                   <th className="py-3 pr-4 font-medium">协议</th>
                   <th className="py-3 pr-4 font-medium">可用</th>
                   <th className="py-3 pr-4 font-medium">预扣</th>
+                  <th className="py-3 pr-4 font-medium">任务/资产</th>
+                  <th className="py-3 pr-4 font-medium">最近任务</th>
                   <th className="py-3 font-medium">充值</th>
                 </tr>
               </thead>
@@ -109,6 +117,12 @@ export function AdminUsersClient() {
                     <td className="py-3 pr-4">{user.agreementStatus === "accepted" ? "已确认" : "待确认"}</td>
                     <td className="py-3 pr-4 font-semibold">{user.pointsAvailable}</td>
                     <td className="py-3 pr-4">{user.pointsHeld}</td>
+                    <td className="py-3 pr-4">
+                      {user.generationTaskCount}/{user.resultAssetCount}
+                    </td>
+                    <td className="py-3 pr-4 text-muted-foreground">
+                      {user.lastTaskAt ? new Date(user.lastTaskAt).toLocaleString() : "-"}
+                    </td>
                     <td className="py-3">
                       <form className="flex flex-wrap gap-2" onSubmit={(event) => grantPoints(event, user.id)}>
                         <input

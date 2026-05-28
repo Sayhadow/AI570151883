@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Users,
   Wand2,
+  DatabaseZap,
   WalletCards
 } from "lucide-react";
 import type {
@@ -231,6 +232,10 @@ export function DashboardClient() {
                 <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/admin/users">
                   <Users className="h-4 w-4" aria-hidden="true" />
                   用户与充值
+                </Link>
+                <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/admin/tasks">
+                  <DatabaseZap className="h-4 w-4" aria-hidden="true" />
+                  任务日志
                 </Link>
                 <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/admin/invite-codes">
                   <ShieldCheck className="h-4 w-4" aria-hidden="true" />

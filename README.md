@@ -94,6 +94,17 @@ Web:
 - `/workspace`
 - `/gallery`
 
+## Phase 6 admin operations
+
+API:
+
+- `GET /api/admin/overview`
+- `GET /api/admin/tasks`
+
+Web:
+
+- `/admin/tasks`
+
 Current web pages:
 
 - `/register`
@@ -103,6 +114,7 @@ Current web pages:
 - `/workspace`
 - `/gallery`
 - `/admin/invite-codes`
+- `/admin/tasks`
 - `/admin/users`
 
 ## MVP build order

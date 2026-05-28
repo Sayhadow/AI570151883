@@ -85,6 +85,9 @@ export interface AdminUserSummary {
   agreementStatus: "pending" | "accepted";
   pointsAvailable: number;
   pointsHeld: number;
+  generationTaskCount: number;
+  resultAssetCount: number;
+  lastTaskAt: string | null;
   createdAt: string;
 }
 
@@ -141,4 +144,43 @@ export interface ResultAssetSummary extends GenerationAssetSummary {
   negativePrompt: string | null;
   taskCreatedAt: string;
   taskCompletedAt: string | null;
+}
+
+export interface AdminProviderCallSummary {
+  id: string;
+  provider: AiProviderKey;
+  statusCode: number | null;
+  durationMs: number | null;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
+export interface AdminGenerationTaskSummary {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userDisplayName: string | null;
+  prompt: string;
+  status: GenerationStatus;
+  provider: AiProviderKey;
+  pointCost: number;
+  resultAssetCount: number;
+  pointTransactionCount: number;
+  errorMessage: string | null;
+  queuedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  latestProviderCall: AdminProviderCallSummary | null;
+}
+
+export interface AdminOverviewSummary {
+  totalUsers: number;
+  totalTasks: number;
+  queuedTasks: number;
+  processingTasks: number;
+  succeededTasks: number;
+  refundedTasks: number;
+  totalAvailablePoints: number;
+  totalHeldPoints: number;
 }
