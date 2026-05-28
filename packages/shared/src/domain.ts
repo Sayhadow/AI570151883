@@ -118,6 +118,7 @@ export interface GenerationTaskSummary {
   id: string;
   prompt: string;
   negativePrompt: string | null;
+  params: Record<string, unknown>;
   status: GenerationStatus;
   provider: AiProviderKey;
   pointCost: number;
@@ -132,4 +133,12 @@ export interface GenerationTaskSummary {
 export interface CreateGenerationTaskResponse {
   task: GenerationTaskSummary;
   pointHoldTransaction: PointTransactionSummary;
+}
+
+export interface ResultAssetSummary extends GenerationAssetSummary {
+  taskId: string;
+  prompt: string;
+  negativePrompt: string | null;
+  taskCreatedAt: string;
+  taskCompletedAt: string | null;
 }

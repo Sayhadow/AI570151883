@@ -5,6 +5,7 @@ import type { ComponentType, FormEvent } from "react";
 import Link from "next/link";
 import {
   Coins,
+  GalleryHorizontal,
   History,
   ImageIcon,
   ImagePlus,
@@ -15,6 +16,7 @@ import {
   Send,
   ShieldCheck,
   Users,
+  Wand2,
   WalletCards
 } from "lucide-react";
 import type {
@@ -216,9 +218,17 @@ export function DashboardClient() {
         <aside className="rounded-lg border border-border bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">快捷入口</h2>
           <div className="mt-4 grid gap-3">
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground" href="/workspace">
+              <Wand2 className="h-4 w-4" aria-hidden="true" />
+              创作工作台
+            </Link>
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/gallery">
+              <GalleryHorizontal className="h-4 w-4" aria-hidden="true" />
+              结果图库
+            </Link>
             {user.role === "admin" ? (
               <>
-                <Link className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground" href="/admin/users">
+                <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/admin/users">
                   <Users className="h-4 w-4" aria-hidden="true" />
                   用户与充值
                 </Link>

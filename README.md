@@ -83,12 +83,25 @@ API:
 
 The dashboard can create mock generation tasks. Creating a task reserves points, enqueues a BullMQ job, and the worker moves the task through `queued -> processing -> succeeded`. Prompts containing `[fail]` intentionally exercise the failure path and refund the held points.
 
+## Phase 5 workspace and gallery
+
+API:
+
+- `GET /api/assets/results`
+
 Web:
+
+- `/workspace`
+- `/gallery`
+
+Current web pages:
 
 - `/register`
 - `/login`
 - `/agreement`
 - `/dashboard`
+- `/workspace`
+- `/gallery`
 - `/admin/invite-codes`
 - `/admin/users`
 

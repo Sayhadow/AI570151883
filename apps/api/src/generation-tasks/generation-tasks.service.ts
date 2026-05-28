@@ -230,6 +230,7 @@ export class GenerationTasksService implements OnModuleDestroy {
       id: task.id,
       prompt: task.prompt,
       negativePrompt: task.negativePrompt,
+      params: this.toRecord(task.params),
       status: this.toTaskStatus(task.status),
       provider: this.toProviderKey(task.provider),
       pointCost: task.pointCost,
@@ -253,6 +254,14 @@ export class GenerationTasksService implements OnModuleDestroy {
       height: asset.height,
       createdAt: asset.createdAt.toISOString()
     };
+  }
+
+  private toRecord(value: Prisma.JsonValue): Record<string, unknown> {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+
+    return {};
   }
 
   private toTaskStatus(status: TaskStatus): GenerationTaskSummary["status"] {
