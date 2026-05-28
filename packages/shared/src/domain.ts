@@ -119,6 +119,8 @@ export interface GenerationAssetSummary {
 
 export interface GenerationTaskSummary {
   id: string;
+  templateId: string | null;
+  templateTitle: string | null;
   prompt: string;
   negativePrompt: string | null;
   params: Record<string, unknown>;
@@ -136,6 +138,17 @@ export interface GenerationTaskSummary {
 export interface CreateGenerationTaskResponse {
   task: GenerationTaskSummary;
   pointHoldTransaction: PointTransactionSummary;
+}
+
+export interface TemplateSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  prompt: string;
+  negativePrompt: string | null;
+  defaultParams: Record<string, unknown>;
+  isPublished: boolean;
+  createdAt: string;
 }
 
 export interface ResultAssetSummary extends GenerationAssetSummary {

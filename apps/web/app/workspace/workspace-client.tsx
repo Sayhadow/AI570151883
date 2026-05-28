@@ -9,6 +9,7 @@ import {
   Coins,
   GalleryHorizontal,
   ImagePlus,
+  Layers3,
   Loader2,
   RefreshCw,
   Send,
@@ -142,6 +143,10 @@ export function WorkspaceClient() {
             <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/dashboard">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               控制台
+            </Link>
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/templates">
+              <Layers3 className="h-4 w-4" aria-hidden="true" />
+              模板
             </Link>
             <Link className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground" href="/gallery">
               <GalleryHorizontal className="h-4 w-4" aria-hidden="true" />

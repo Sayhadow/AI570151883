@@ -9,6 +9,7 @@ import {
   History,
   ImageIcon,
   ImagePlus,
+  Layers3,
   LayoutTemplate,
   Loader2,
   LogOut,
@@ -226,6 +227,10 @@ export function DashboardClient() {
             <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/gallery">
               <GalleryHorizontal className="h-4 w-4" aria-hidden="true" />
               结果图库
+            </Link>
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-semibold" href="/templates">
+              <Layers3 className="h-4 w-4" aria-hidden="true" />
+              模板图库
             </Link>
             {user.role === "admin" ? (
               <>

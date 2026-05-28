@@ -7,6 +7,7 @@ import { GenerationTasksService } from "./generation-tasks.service.js";
 @Module({
   imports: [AuthModule, PointsModule],
   controllers: [GenerationTasksController],
-  providers: [GenerationTasksService]
+  providers: [GenerationTasksService],
+  exports: [GenerationTasksService]
 })
 export class GenerationTasksModule {}

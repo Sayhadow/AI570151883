@@ -6,6 +6,7 @@ import {
   GenerationTask,
   Prisma,
   ProviderKey,
+  Template,
   TaskStatus
 } from "@ai-image/db";
 import {
@@ -25,10 +26,12 @@ export interface CreateGenerationTaskInput {
   params?: unknown;
   provider?: string;
   pointCost?: number;
+  templateId?: string;
 }
 
 type TaskWithAssets = GenerationTask & {
   assets: Asset[];
+  template?: Pick<Template, "title"> | null;
 };
 
 @Injectable()
@@ -65,16 +68,30 @@ export class GenerationTasksService implements OnModuleDestroy {
   }
 
   async create(userId: string, input: CreateGenerationTaskInput): Promise<CreateGenerationTaskResponse> {
-    const prompt = this.normalizePrompt(input.prompt);
-    const negativePrompt = this.normalizeOptionalText(input.negativePrompt, 1000);
+    const template = input.templateId
+      ? await this.prisma.template.findFirst({
+          where: {
+            id: input.templateId,
+            isPublished: true
+          }
+        })
+      : null;
+
+    if (input.templateId && !template) {
+      throw new NotFoundException("Template not found");
+    }
+
+    const prompt = this.normalizePrompt(input.prompt ?? template?.prompt);
+    const negativePrompt = this.normalizeOptionalText(input.negativePrompt ?? template?.negativePrompt ?? undefined, 1000);
     const provider = this.normalizeProvider(input.provider);
     const pointCost = input.pointCost === undefined ? this.defaultPointCost : this.normalizePointCost(input.pointCost);
-    const params = this.normalizeParams(input.params);
+    const params = this.mergeParams(template?.defaultParams, input.params);
 
     const created = await this.prisma.$transaction(async (tx) => {
       const task = await tx.generationTask.create({
         data: {
           userId,
+          templateId: template?.id ?? null,
           prompt,
           negativePrompt,
           params,
@@ -83,7 +100,7 @@ export class GenerationTasksService implements OnModuleDestroy {
           status: TaskStatus.QUEUED,
           queuedAt: new Date()
         },
-        include: { assets: true }
+        include: { assets: true, template: { select: { title: true } } }
       });
 
       const pointHoldTransaction = await this.pointsService.reserveGenerationPointsInTransaction(
@@ -117,7 +134,7 @@ export class GenerationTasksService implements OnModuleDestroy {
       const task = await this.prisma.generationTask.update({
         where: { id: created.task.id },
         data: { providerTaskId: String(job.id) },
-        include: { assets: true }
+        include: { assets: true, template: { select: { title: true } } }
       });
 
       return {
@@ -142,7 +159,7 @@ export class GenerationTasksService implements OnModuleDestroy {
   async listForUser(userId: string): Promise<GenerationTaskSummary[]> {
     const tasks = await this.prisma.generationTask.findMany({
       where: { userId },
-      include: { assets: true },
+      include: { assets: true, template: { select: { title: true } } },
       orderBy: { createdAt: "desc" },
       take: 50
     });
@@ -153,7 +170,7 @@ export class GenerationTasksService implements OnModuleDestroy {
   async getForUser(userId: string, taskId: string): Promise<GenerationTaskSummary> {
     const task = await this.prisma.generationTask.findFirst({
       where: { id: taskId, userId },
-      include: { assets: true }
+      include: { assets: true, template: { select: { title: true } } }
     });
 
     if (!task) {
@@ -225,9 +242,27 @@ export class GenerationTasksService implements OnModuleDestroy {
     return params as Prisma.InputJsonObject;
   }
 
+  private mergeParams(defaultParams: Prisma.JsonValue | undefined, params: unknown): Prisma.InputJsonValue {
+    const normalizedDefaults = this.toInputJsonObject(defaultParams ?? {});
+    const normalizedParams = this.normalizeParams(params);
+
+    if (normalizedParams && typeof normalizedParams === "object" && !Array.isArray(normalizedParams)) {
+      const mergedParams: Prisma.InputJsonObject = {
+        ...normalizedDefaults,
+        ...(normalizedParams as Prisma.InputJsonObject)
+      };
+
+      return mergedParams;
+    }
+
+    return normalizedDefaults;
+  }
+
   private toTaskSummary(task: TaskWithAssets): GenerationTaskSummary {
     return {
       id: task.id,
+      templateId: task.templateId,
+      templateTitle: task.template?.title ?? null,
       prompt: task.prompt,
       negativePrompt: task.negativePrompt,
       params: this.toRecord(task.params),
@@ -259,6 +294,14 @@ export class GenerationTasksService implements OnModuleDestroy {
   private toRecord(value: Prisma.JsonValue): Record<string, unknown> {
     if (value && typeof value === "object" && !Array.isArray(value)) {
       return value as Record<string, unknown>;
+    }
+
+    return {};
+  }
+
+  private toInputJsonObject(value: Prisma.JsonValue): Prisma.InputJsonObject {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return value as Prisma.InputJsonObject;
     }
 
     return {};

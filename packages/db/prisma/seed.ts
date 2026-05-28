@@ -4,6 +4,7 @@ import {
   InviteCodeStatus,
   PointTransactionStatus,
   PointTransactionType,
+  Prisma,
   PrismaClient,
   UserRole
 } from "@prisma/client";
@@ -94,9 +95,78 @@ async function main() {
     }
   });
 
+  const templates = [
+    {
+      title: "电商产品海报",
+      description: "适合单品主视觉、促销图和商品详情首屏。",
+      prompt: "A polished ecommerce product poster, clean studio lighting, premium composition, crisp product edges, subtle reflections, modern Chinese brand campaign",
+      negativePrompt: "low quality, watermark, distorted product, unreadable text, clutter",
+      defaultParams: {
+        stylePreset: "product",
+        aspectRatio: "4:5",
+        quality: 2
+      }
+    },
+    {
+      title: "杂志封面人像",
+      description: "适合头像、人物故事、活动主视觉。",
+      prompt: "An editorial magazine cover portrait, confident subject, refined wardrobe, cinematic lighting, elegant layout space, high-end publication style",
+      negativePrompt: "extra fingers, deformed face, harsh shadow, low resolution, watermark",
+      defaultParams: {
+        stylePreset: "editorial",
+        aspectRatio: "4:5",
+        quality: 2
+      }
+    },
+    {
+      title: "电影感场景图",
+      description: "适合概念场景、世界观氛围和叙事画面。",
+      prompt: "A cinematic concept art scene, dramatic lighting, deep atmosphere, layered foreground and background, production design quality",
+      negativePrompt: "flat lighting, noisy, blurry, overexposed, text artifacts",
+      defaultParams: {
+        stylePreset: "cinematic",
+        aspectRatio: "16:9",
+        quality: 3
+      }
+    }
+  ] satisfies Array<{
+    title: string;
+    description: string;
+    prompt: string;
+    negativePrompt: string;
+    defaultParams: Prisma.InputJsonObject;
+  }>;
+
+  for (const template of templates) {
+    const existingTemplate = await prisma.template.findFirst({
+      where: { title: template.title }
+    });
+
+    if (existingTemplate) {
+      await prisma.template.update({
+        where: { id: existingTemplate.id },
+        data: {
+          description: template.description,
+          prompt: template.prompt,
+          negativePrompt: template.negativePrompt,
+          defaultParams: template.defaultParams,
+          isPublished: true
+        }
+      });
+    } else {
+      await prisma.template.create({
+        data: {
+          ...template,
+          isPublished: true
+        }
+      });
+    }
+  }
+
   console.log(`Seeded admin: ${adminEmail}`);
   console.log(`Seeded admin points: ${adminBalance.available}`);
   console.log(`Seeded invite code: ${inviteCode}`);
+  console.log(`Seeded templates: ${templates.length}`);
 }
 
 main()

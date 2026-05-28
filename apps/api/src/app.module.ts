@@ -8,6 +8,7 @@ import { HealthController } from "./health/health.controller.js";
 import { InviteCodesModule } from "./invite-codes/invite-codes.module.js";
 import { PointsModule } from "./points/points.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
+import { TemplatesModule } from "./templates/templates.module.js";
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { PrismaModule } from "./prisma/prisma.module.js";
     PointsModule,
     GenerationTasksModule,
     AssetsModule,
-    AdminOpsModule
+    AdminOpsModule,
+    TemplatesModule
   ],
   controllers: [HealthController]
 })

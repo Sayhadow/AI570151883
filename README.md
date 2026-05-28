@@ -105,6 +105,18 @@ Web:
 
 - `/admin/tasks`
 
+## Phase 7 templates and Remix
+
+API:
+
+- `GET /api/templates`
+- `GET /api/templates/:templateId`
+- `POST /api/templates/:templateId/remix`
+
+Web:
+
+- `/templates`
+
 Current web pages:
 
 - `/register`
@@ -113,6 +125,7 @@ Current web pages:
 - `/dashboard`
 - `/workspace`
 - `/gallery`
+- `/templates`
 - `/admin/invite-codes`
 - `/admin/tasks`
 - `/admin/users`
