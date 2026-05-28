@@ -1,5 +1,12 @@
 import { pbkdf2Sync, randomBytes } from "node:crypto";
-import { AgreementStatus, InviteCodeStatus, PrismaClient, UserRole } from "@prisma/client";
+import {
+  AgreementStatus,
+  InviteCodeStatus,
+  PointTransactionStatus,
+  PointTransactionType,
+  PrismaClient,
+  UserRole
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -17,6 +24,7 @@ async function main() {
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@example.com";
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "Admin12345";
   const inviteCode = (process.env.SEED_INVITE_CODE ?? "INTERNAL-TEST-2026").toUpperCase();
+  const adminPoints = Number(process.env.SEED_ADMIN_POINTS ?? 1000);
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
@@ -33,7 +41,7 @@ async function main() {
     }
   });
 
-  await prisma.userBalance.upsert({
+  let adminBalance = await prisma.userBalance.upsert({
     where: { userId: admin.id },
     update: {},
     create: {
@@ -42,6 +50,38 @@ async function main() {
       held: 0
     }
   });
+
+  if (Number.isInteger(adminPoints) && adminPoints > 0) {
+    const existingSeedGrant = await prisma.pointTransaction.findFirst({
+      where: {
+        userId: admin.id,
+        type: PointTransactionType.ADMIN_GRANT,
+        reason: "Initial seed points"
+      }
+    });
+
+    if (!existingSeedGrant) {
+      adminBalance = await prisma.userBalance.update({
+        where: { userId: admin.id },
+        data: {
+          available: { increment: adminPoints }
+        }
+      });
+
+      await prisma.pointTransaction.create({
+        data: {
+          userId: admin.id,
+          type: PointTransactionType.ADMIN_GRANT,
+          status: PointTransactionStatus.COMMITTED,
+          amount: adminPoints,
+          balanceAfter: adminBalance.available,
+          heldAfter: adminBalance.held,
+          reason: "Initial seed points",
+          committedAt: new Date()
+        }
+      });
+    }
+  }
 
   await prisma.inviteCode.upsert({
     where: { code: inviteCode },
@@ -55,6 +95,7 @@ async function main() {
   });
 
   console.log(`Seeded admin: ${adminEmail}`);
+  console.log(`Seeded admin points: ${adminBalance.available}`);
   console.log(`Seeded invite code: ${inviteCode}`);
 }
 
@@ -66,4 +107,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

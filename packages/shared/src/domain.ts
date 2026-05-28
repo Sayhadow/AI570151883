@@ -47,6 +47,52 @@ export interface InviteCodeSummary {
   createdAt: string;
 }
 
+export type PointTransactionType =
+  | "admin_grant"
+  | "generation_hold"
+  | "generation_capture"
+  | "generation_refund"
+  | "adjustment";
+
+export type PointTransactionStatus = "pending" | "committed" | "reversed" | "failed";
+
+export interface PointBalanceSummary {
+  available: number;
+  held: number;
+  updatedAt: string | null;
+}
+
+export interface PointTransactionSummary {
+  id: string;
+  userId: string;
+  taskId: string | null;
+  relatedTransactionId: string | null;
+  type: PointTransactionType;
+  status: PointTransactionStatus;
+  amount: number;
+  balanceAfter: number | null;
+  heldAfter: number | null;
+  reason: string | null;
+  createdAt: string;
+  committedAt: string | null;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  displayName: string | null;
+  role: UserRole;
+  agreementStatus: "pending" | "accepted";
+  pointsAvailable: number;
+  pointsHeld: number;
+  createdAt: string;
+}
+
+export interface AdminPointGrantResponse {
+  user: AdminUserSummary;
+  transaction: PointTransactionSummary;
+}
+
 export interface GenerationTaskPayload {
   taskId: string;
   userId: string;

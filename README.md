@@ -37,15 +37,16 @@ Default local URLs:
 
 - Admin email: `admin@example.com`
 - Admin password: `Admin12345`
+- Admin points: `1000`
 - Initial invite code: `INTERNAL-TEST-2026`
 
 You can override these with:
 
 ```bash
-SEED_ADMIN_EMAIL=owner@example.com SEED_ADMIN_PASSWORD=change-me SEED_INVITE_CODE=YOUR-CODE corepack pnpm db:seed
+SEED_ADMIN_EMAIL=owner@example.com SEED_ADMIN_PASSWORD=change-me SEED_ADMIN_POINTS=5000 SEED_INVITE_CODE=YOUR-CODE corepack pnpm db:seed
 ```
 
-## Phase 2 auth routes
+## Phase 2 auth and invite routes
 
 API:
 
@@ -57,6 +58,21 @@ API:
 - `GET /api/admin/invite-codes`
 - `POST /api/admin/invite-codes`
 
+## Phase 3 points routes
+
+API:
+
+- `GET /api/points/balance`
+- `GET /api/points/transactions`
+- `GET /api/admin/users`
+- `POST /api/admin/users/:userId/points`
+
+The API points service also exposes internal methods for the upcoming generation flow:
+
+- `reserveGenerationPoints(userId, taskId, amount, reason?)`
+- `captureGenerationHold(holdTransactionId, reason?)`
+- `refundGenerationHold(holdTransactionId, reason?)`
+
 Web:
 
 - `/register`
@@ -64,6 +80,7 @@ Web:
 - `/agreement`
 - `/dashboard`
 - `/admin/invite-codes`
+- `/admin/users`
 
 ## MVP build order
 

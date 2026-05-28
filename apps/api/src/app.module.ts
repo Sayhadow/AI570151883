@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module.js";
 import { HealthController } from "./health/health.controller.js";
 import { InviteCodesModule } from "./invite-codes/invite-codes.module.js";
+import { PointsModule } from "./points/points.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
 
 @Module({
@@ -12,7 +13,8 @@ import { PrismaModule } from "./prisma/prisma.module.js";
     }),
     PrismaModule,
     AuthModule,
-    InviteCodesModule
+    InviteCodesModule,
+    PointsModule
   ],
   controllers: [HealthController]
 })
