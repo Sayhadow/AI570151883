@@ -41,7 +41,7 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-primary">内部测试版 MVP</p>
-            <h1 className="text-3xl font-semibold tracking-normal text-foreground">AI 生图网站控制台</h1>
+            <h1 className="text-3xl font-semibold tracking-normal text-foreground">Sayhadow 控制台</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
               当前先完成本地开发地基：Next.js 前台、NestJS API、BullMQ Worker、PostgreSQL、Redis 和对象存储。
             </p>

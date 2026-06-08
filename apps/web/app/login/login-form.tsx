@@ -27,7 +27,7 @@ export function LoginForm() {
         })
       });
 
-      window.location.href = response.user.agreementStatus === "accepted" ? "/dashboard" : "/agreement";
+      window.location.href = response.user.agreementStatus === "accepted" ? "/workspace/home" : "/agreement";
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "登录失败");
     } finally {
@@ -51,4 +51,3 @@ export function LoginForm() {
     </form>
   );
 }
-

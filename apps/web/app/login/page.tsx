@@ -5,8 +5,8 @@ import { LoginForm } from "./login-form";
 export default function LoginPage() {
   return (
     <AuthShell
-      title="登录"
-      description="登录后可以进入创作工作台、查看点数和任务状态。"
+      title="欢迎使用 Sayhadow"
+      description="首次登录享限时 AI 生图积分福利"
       footer={
         <>
           没有账号？{" "}
@@ -20,4 +20,3 @@ export default function LoginPage() {
     </AuthShell>
   );
 }
-

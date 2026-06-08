@@ -13,7 +13,7 @@ import {
   Wand2
 } from "lucide-react";
 import type { AuthUser, ResultAssetSummary } from "@ai-image/shared";
-import { apiRequest } from "../../lib/api";
+import { apiRequest, getApiBaseUrl } from "../../lib/api";
 
 export function GalleryClient() {
   const [assets, setAssets] = useState<ResultAssetSummary[]>([]);
@@ -62,11 +62,11 @@ export function GalleryClient() {
             <h1 className="mt-1 text-2xl font-semibold">生成资产</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/dashboard">
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/workspace/home">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               控制台
             </Link>
-            <Link className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground" href="/workspace">
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground" href="/workspace/home">
               <Wand2 className="h-4 w-4" aria-hidden="true" />
               工作台
             </Link>
@@ -94,7 +94,7 @@ export function GalleryClient() {
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredAssets.map((asset, index) => (
             <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm" key={asset.id}>
-              <MockPreview asset={asset} index={index} />
+              <AssetPreview asset={asset} index={index} />
               <div className="p-4">
                 <div className="line-clamp-2 min-h-10 text-sm font-semibold">{asset.prompt}</div>
                 <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
@@ -109,9 +109,13 @@ export function GalleryClient() {
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-2">
                   <span className="truncate text-xs text-muted-foreground">{asset.objectKey}</span>
-                  <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border" type="button" title={asset.objectKey}>
+                  <a
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border"
+                    href={asset.contentUrl ? toAbsoluteAssetUrl(asset.contentUrl) : undefined}
+                    title={asset.objectKey}
+                  >
                     <Download className="h-4 w-4" aria-hidden="true" />
-                  </button>
+                  </a>
                 </div>
               </div>
             </article>
@@ -133,12 +137,24 @@ export function GalleryClient() {
   );
 }
 
-function MockPreview({ asset, index }: { asset: ResultAssetSummary; index: number }) {
+function AssetPreview({ asset, index }: { asset: ResultAssetSummary; index: number }) {
+  if (asset.contentUrl) {
+    return (
+      <div className="relative aspect-square bg-muted">
+        <img
+          alt={asset.prompt}
+          className="h-full w-full object-cover"
+          src={toAbsoluteAssetUrl(asset.contentUrl)}
+        />
+      </div>
+    );
+  }
+
   const palettes = [
-    "from-sky-200 via-white to-emerald-200",
-    "from-amber-200 via-white to-sky-200",
-    "from-rose-200 via-white to-lime-200",
-    "from-cyan-200 via-white to-slate-200"
+    "from-[rgb(255,50,100)] via-[rgb(255,50,180)] to-[rgb(255,50,255)]",
+    "from-[rgb(255,50,120)] via-[rgb(255,50,200)] to-[rgb(255,50,255)]",
+    "from-[rgb(255,50,100)] via-[rgb(255,50,150)] to-[rgb(255,50,230)]",
+    "from-[rgb(255,50,140)] via-[rgb(255,50,210)] to-[rgb(255,50,255)]"
   ];
   const palette = palettes[index % palettes.length];
 
@@ -155,4 +171,8 @@ function MockPreview({ asset, index }: { asset: ResultAssetSummary; index: numbe
       </div>
     </div>
   );
+}
+
+function toAbsoluteAssetUrl(contentUrl: string) {
+  return `${getApiBaseUrl()}${contentUrl}`;
 }

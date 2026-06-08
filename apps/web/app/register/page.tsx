@@ -5,7 +5,7 @@ import { RegisterForm } from "./register-form";
 export default function RegisterPage() {
   return (
     <AuthShell
-      title="邀请码注册"
+      title="加入 Sayhadow"
       description="内部测试阶段仅允许持邀请码的用户创建账户。"
       footer={
         <>
@@ -20,4 +20,3 @@ export default function RegisterPage() {
     </AuthShell>
   );
 }
-

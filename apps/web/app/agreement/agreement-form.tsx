@@ -19,7 +19,7 @@ export function AgreementForm() {
         setUser(currentUser);
 
         if (currentUser.agreementStatus === "accepted") {
-          window.location.href = "/dashboard";
+          window.location.href = "/workspace/home";
         }
       })
       .catch(() => setError("请先登录后再确认协议"));
@@ -41,7 +41,7 @@ export function AgreementForm() {
         method: "POST",
         body: JSON.stringify({})
       });
-      window.location.href = "/dashboard";
+      window.location.href = "/workspace/home";
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "协议确认失败");
     } finally {
@@ -83,4 +83,3 @@ export function AgreementForm() {
     </form>
   );
 }
-

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { DatabaseZap, Plus, RefreshCw } from "lucide-react";
 import type { InviteCodeSummary } from "@ai-image/shared";
@@ -24,11 +25,12 @@ export function InviteCodesClient() {
     }
   }
 
-  async function createInviteCode(event: React.FormEvent<HTMLFormElement>) {
+  async function createInviteCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     try {
       await apiRequest<InviteCodeSummary>("/api/admin/invite-codes", {
@@ -39,7 +41,7 @@ export function InviteCodesClient() {
           note: formData.get("note") || undefined
         })
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadInviteCodes();
     } catch (caughtError) {
       setMessage(caughtError instanceof Error ? caughtError.message : "创建失败");
@@ -63,7 +65,7 @@ export function InviteCodesClient() {
               <DatabaseZap className="mr-1 inline h-4 w-4" aria-hidden="true" />
               任务日志
             </Link>
-            <Link className="text-sm font-semibold text-primary" href="/dashboard">
+            <Link className="text-sm font-semibold text-primary" href="/workspace/home">
               返回控制台
             </Link>
           </div>

@@ -2,13 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "HarmonyOS Sans SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/HarmonyOS_Sans_SC_Regular.ttf") format("truetype");
+}
+
+@property --sayhadow-live-b {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 100;
+}
+
+@property --sayhadow-live-b-soft {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 180;
+}
+
 :root {
-  --background: 210 20% 98%;
-  --foreground: 221 39% 11%;
-  --muted: 210 20% 94%;
-  --muted-foreground: 215 14% 42%;
-  --border: 214 18% 84%;
-  --primary: 214 84% 45%;
+  --sayhadow-accent-start: 255 50 100;
+  --sayhadow-accent-mid: 255 50 180;
+  --sayhadow-accent-end: 255 50 255;
+  --sayhadow-live-b: 100;
+  --sayhadow-live-b-soft: 180;
+  --background: 220 16% 7%;
+  --foreground: 210 40% 98%;
+  --muted: 220 12% 14%;
+  --muted-foreground: 215 13% 68%;
+  --border: 220 12% 23%;
+  --primary: 322 100% 60%;
   --primary-foreground: 0 0% 100%;
 }
 
@@ -20,9 +45,11 @@ body {
   margin: 0;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  animation: sayhadow-live-color 7s ease-in-out infinite alternate;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+    "HarmonyOS Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC",
+    "Noto Sans SC", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 button,
@@ -32,3 +59,349 @@ select {
   font: inherit;
 }
 
+@keyframes sayhadow-live-color {
+  0% {
+    --sayhadow-live-b: 100;
+    --sayhadow-live-b-soft: 145;
+  }
+
+  50% {
+    --sayhadow-live-b: 190;
+    --sayhadow-live-b-soft: 225;
+  }
+
+  100% {
+    --sayhadow-live-b: 255;
+    --sayhadow-live-b-soft: 100;
+  }
+}
+
+@keyframes sayhadow-gradient-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes sayhadow-cursor-star-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.25);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+@keyframes sayhadow-title-word-reveal {
+  0% {
+    opacity: 0;
+    filter: blur(10px) brightness(1.7);
+    transform: translateY(0.34em) scale(0.96);
+  }
+
+  38% {
+    opacity: 1;
+    filter: blur(0) brightness(1.25);
+    transform: translateY(-0.08em) scale(1.035);
+  }
+
+  64% {
+    filter: blur(0) brightness(1.08);
+    transform: translateY(0.02em) scale(0.995);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0) brightness(1);
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sayhadow-logo-mark {
+  background: linear-gradient(45deg, rgb(255 50 100) 0%, rgb(255 50 170) 48%, rgb(186 50 255) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    0 14px 34px rgb(255 50 180 / 0.24);
+}
+
+.sayhadow-auth input {
+  border-color: rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.03);
+  color: white;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+}
+
+.sayhadow-auth input::placeholder {
+  color: rgb(255 255 255 / 0.32);
+}
+
+.sayhadow-auth label span {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.sayhadow-auth button[type="submit"] {
+  height: 4rem;
+  border-radius: 1rem;
+  background: white;
+  color: #09090b;
+  font-size: 1rem;
+}
+
+.sayhadow-auth a {
+  color: rgb(255 255 255 / 0.82);
+}
+
+.sayhadow-workspace {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 42% 12%, rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.2), transparent 30rem),
+    radial-gradient(circle at 82% 28%, rgb(255 50 calc(var(--sayhadow-live-b-soft) * 1) / 0.18), transparent 28rem),
+    linear-gradient(180deg, #050506 0%, #08090d 58%, #050506 100%) !important;
+  color: rgb(248 250 252);
+}
+
+.sayhadow-workspace aside {
+  border-color: rgb(255 255 255 / 0.08) !important;
+  background: rgb(3 4 8 / 0.94) !important;
+}
+
+.sayhadow-workspace header {
+  border-color: transparent !important;
+  background: linear-gradient(180deg, rgb(5 5 6 / 0.9), rgb(5 5 6 / 0.68)) !important;
+  color: white;
+}
+
+.sayhadow-workspace .sayhadow-live-hero-glow {
+  inset: -18%;
+  opacity: 0.72;
+  filter: blur(22px);
+  background:
+    radial-gradient(ellipse at 30% 30%, rgb(255 50 255 / 0.28), transparent 34rem),
+    radial-gradient(ellipse at 72% 52%, rgb(255 50 100 / 0.22), transparent 32rem),
+    radial-gradient(ellipse at 50% 50%, rgb(255 50 180 / 0.12), transparent 46rem);
+  background-size: 180% 180%;
+  animation: sayhadow-gradient-drift 7s ease-in-out infinite alternate;
+  mask-image: radial-gradient(ellipse at center, black 0%, black 58%, transparent 90%);
+}
+
+.sayhadow-workspace .sayhadow-cursor-star {
+  z-index: 1;
+}
+
+.sayhadow-workspace .sayhadow-cursor-star::before,
+.sayhadow-workspace .sayhadow-cursor-star::after {
+  position: absolute;
+  content: "";
+  inset: 0;
+  background: rgb(255 255 255 / 0.72);
+  clip-path: polygon(50% 0%, 61% 36%, 100% 50%, 61% 64%, 50% 100%, 39% 64%, 0% 50%, 39% 36%);
+  filter: drop-shadow(0 0 8px rgb(255 255 255 / 0.42));
+  animation: sayhadow-cursor-star-pop 820ms ease-out forwards;
+}
+
+.sayhadow-workspace .sayhadow-cursor-star::after {
+  inset: 24%;
+  opacity: 0.58;
+  animation-delay: 60ms;
+}
+
+.sayhadow-workspace .sayhadow-live-panel-glow {
+  background:
+    radial-gradient(circle at 20% 18%, rgb(255 50 255 / 0.18), transparent 22rem),
+    radial-gradient(circle at 86% 40%, rgb(255 50 100 / 0.15), transparent 24rem),
+    linear-gradient(120deg, rgb(255 50 100 / 0.1), rgb(255 50 255 / 0.16), rgb(255 50 100 / 0.1));
+  background-size: 190% 190%;
+  animation: sayhadow-gradient-drift 5s ease-in-out infinite alternate;
+}
+
+.sayhadow-workspace .bg-white,
+.sayhadow-workspace .bg-slate-50 {
+  background-color: rgb(255 255 255 / 0.055) !important;
+}
+
+.sayhadow-workspace .bg-slate-100 {
+  background-color: rgb(255 255 255 / 0.08) !important;
+}
+
+.sayhadow-workspace .border-slate-200,
+.sayhadow-workspace .border-slate-300,
+.sayhadow-workspace .border-slate-100 {
+  border-color: rgb(255 255 255 / 0.11) !important;
+}
+
+.sayhadow-workspace .text-slate-950,
+.sayhadow-workspace .text-slate-800,
+.sayhadow-workspace .text-slate-700 {
+  color: rgb(248 250 252) !important;
+}
+
+.sayhadow-workspace .text-slate-600,
+.sayhadow-workspace .text-slate-500,
+.sayhadow-workspace .text-slate-400 {
+  color: rgb(203 213 225 / 0.74) !important;
+}
+
+.sayhadow-workspace input,
+.sayhadow-workspace textarea,
+.sayhadow-workspace select {
+  border-color: rgb(255 255 255 / 0.12) !important;
+  background-color: rgb(7 8 12 / 0.78) !important;
+  color: white !important;
+}
+
+.sayhadow-workspace input::placeholder,
+.sayhadow-workspace textarea::placeholder {
+  color: rgb(203 213 225 / 0.48);
+}
+
+.sayhadow-workspace .shadow-sm {
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.22) !important;
+}
+
+.sayhadow-workspace .ring-slate-950\/20 {
+  --tw-ring-color: rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.28) !important;
+}
+
+.sayhadow-workspace .text-sky-200,
+.sayhadow-workspace .text-sky-300,
+.sayhadow-workspace .text-sky-400,
+.sayhadow-workspace .text-sky-700,
+.sayhadow-workspace .text-sky-800 {
+  background: linear-gradient(90deg, rgb(255 50 100), rgb(255 50 255), rgb(255 50 100));
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  animation: sayhadow-gradient-drift 4.5s ease-in-out infinite alternate;
+}
+
+.sayhadow-workspace .sayhadow-hero-word {
+  display: inline-block;
+  min-width: 5.35em;
+  text-align: left;
+  transform-origin: 50% 70%;
+  white-space: nowrap;
+  animation:
+    sayhadow-title-word-reveal 900ms cubic-bezier(0.18, 0.95, 0.2, 1) both,
+    sayhadow-gradient-drift 4.5s ease-in-out infinite alternate;
+}
+
+.sayhadow-workspace .bg-sky-300,
+.sayhadow-workspace .group:hover .group-hover\:bg-sky-300 {
+  background: linear-gradient(
+    90deg,
+    rgb(255 50 100),
+    rgb(255 50 calc(var(--sayhadow-live-b) * 1)),
+    rgb(255 50 255)
+  ) !important;
+  background-size: 220% 100% !important;
+  animation: sayhadow-gradient-drift 4s ease-in-out infinite alternate;
+}
+
+.sayhadow-workspace .bg-sky-50,
+.sayhadow-workspace .bg-sky-100,
+.sayhadow-workspace .bg-sky-300\/10,
+.sayhadow-workspace .bg-emerald-50 {
+  background-color: rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.11) !important;
+}
+
+.sayhadow-workspace .border-sky-200,
+.sayhadow-workspace .border-sky-300\/20,
+.sayhadow-workspace .border-sky-300\/30,
+.sayhadow-workspace .border-sky-300\/50,
+.sayhadow-workspace .border-sky-300\/70,
+.sayhadow-workspace .border-sky-400\/30,
+.sayhadow-workspace .border-sky-400\/40,
+.sayhadow-workspace .border-emerald-200 {
+  border-color: rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.48) !important;
+}
+
+.sayhadow-workspace .text-emerald-700 {
+  color: rgb(255 50 calc(var(--sayhadow-live-b) * 1)) !important;
+}
+
+.sayhadow-workspace .hover\:border-sky-300\/50:hover,
+.sayhadow-workspace .hover\:border-sky-300\/60:hover,
+.sayhadow-workspace .focus\:border-sky-300:focus,
+.sayhadow-workspace .focus-within\:border-sky-300:focus-within,
+.sayhadow-workspace .focus-within\:border-sky-300\/55:focus-within {
+  border-color: rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.72) !important;
+}
+
+.sayhadow-workspace .shadow-\[0_0_24px_rgba\(125\2c 211\2c 252\2c 0\.28\)\] {
+  box-shadow: 0 0 24px rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.32) !important;
+}
+
+.sayhadow-workspace .shadow-\[0_0_80px_rgba\(56\2c 189\2c 248\2c 0\.12\)\],
+.sayhadow-workspace .shadow-\[0_0_80px_rgba\(56\2c 189\2c 248\2c 0\.15\)\] {
+  box-shadow: 0 0 80px rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.2) !important;
+}
+
+.sayhadow-workspace .sayhadow-home-composer input,
+.sayhadow-workspace .sayhadow-home-composer textarea {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sayhadow-workspace .sayhadow-home-composer input:focus,
+.sayhadow-workspace .sayhadow-home-composer textarea:focus {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sayhadow-workspace .sayhadow-home-prompt-shell {
+  position: relative;
+  min-height: 3.5rem;
+}
+
+.sayhadow-workspace .sayhadow-home-prompt-input {
+  display: block;
+  height: 3.25rem;
+  max-height: 3.25rem;
+  overflow-y: hidden;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    height 180ms ease,
+    transform 180ms ease;
+}
+
+.sayhadow-workspace .sayhadow-home-prompt-shell.is-expanded .sayhadow-home-prompt-input {
+  position: absolute;
+  z-index: 40;
+  top: -0.625rem;
+  left: -0.875rem;
+  right: -0.875rem;
+  height: min(18rem, 42vh);
+  max-height: min(18rem, 42vh);
+  padding: 0.875rem;
+  overflow-y: auto;
+  border: 1px solid rgb(255 255 255 / 0.045) !important;
+  border-radius: 1.125rem;
+  background:
+    radial-gradient(circle at 18% 0%, rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.08), transparent 16rem),
+    linear-gradient(180deg, rgb(31 17 31 / 0.84), rgb(15 10 18 / 0.88)) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.035),
+    inset 0 0 38px rgb(255 255 255 / 0.018),
+    0 24px 70px rgb(0 0 0 / 0.32),
+    0 0 54px rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.11);
+  backdrop-filter: blur(18px);
+}
+
+.sayhadow-workspace .sayhadow-home-prompt-shell.is-expanded .sayhadow-home-prompt-input:focus {
+  border-color: rgb(255 50 calc(var(--sayhadow-live-b) * 1) / 0.16) !important;
+}

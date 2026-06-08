@@ -1,6 +1,5 @@
-import { DashboardClient } from "./dashboard-client";
+import { redirect } from "next/navigation";
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  redirect("/workspace/home");
 }
-

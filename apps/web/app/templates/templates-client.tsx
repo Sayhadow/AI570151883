@@ -127,7 +127,7 @@ export function TemplatesClient() {
             <h1 className="mt-1 text-2xl font-semibold">Template Remix</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/dashboard">
+            <Link className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold" href="/workspace/home">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               控制台
             </Link>
@@ -249,9 +249,9 @@ export function TemplatesClient() {
 
 function TemplatePreview({ index, template }: { index: number; template: TemplateSummary }) {
   const palettes = [
-    "from-sky-200 via-white to-emerald-200",
-    "from-amber-200 via-white to-cyan-200",
-    "from-rose-200 via-white to-lime-200"
+    "from-[rgb(255,50,100)] via-[rgb(255,50,180)] to-[rgb(255,50,255)]",
+    "from-[rgb(255,50,120)] via-[rgb(255,50,200)] to-[rgb(255,50,255)]",
+    "from-[rgb(255,50,100)] via-[rgb(255,50,150)] to-[rgb(255,50,230)]"
   ];
   const palette = palettes[index % palettes.length];
 
