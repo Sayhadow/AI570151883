@@ -11,4 +11,6 @@ coverage/
 *.tsbuildinfo
 uploads/
 storage/
+.tmp/
+.generated-assets/
 .turbo/

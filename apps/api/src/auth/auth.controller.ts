@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Post, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service.js";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Post("register")
   register(@Body() body: unknown, @Res({ passthrough: true }) response: Response) {
@@ -31,4 +31,3 @@ export class AuthController {
     return this.authService.acceptAgreement(request);
   }
 }
-

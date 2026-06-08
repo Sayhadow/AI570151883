@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import {
   AgreementStatus,
   GenerationTask,
@@ -34,7 +34,7 @@ type UserWithBalance = User & {
 
 @Injectable()
 export class PointsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async getBalance(userId: string): Promise<PointBalanceSummary> {
     const balance = await this.ensureBalance(userId);

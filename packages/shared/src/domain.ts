@@ -101,6 +101,7 @@ export interface GenerationTaskPayload {
   userId: string;
   prompt: string;
   negativePrompt: string | null;
+  params: Record<string, string | number | boolean | null | string[]>;
   referenceAssetIds: string[];
   provider: AiProviderKey;
   pointHoldTransactionId: string;
@@ -111,6 +112,7 @@ export interface GenerationAssetSummary {
   kind: "reference" | "result" | "template_cover";
   bucket: string;
   objectKey: string;
+  contentUrl: string | null;
   mimeType: string;
   width: number | null;
   height: number | null;
@@ -138,6 +140,12 @@ export interface GenerationTaskSummary {
 export interface CreateGenerationTaskResponse {
   task: GenerationTaskSummary;
   pointHoldTransaction: PointTransactionSummary;
+}
+
+export interface GenerationPromptPlanResponse {
+  mode: "manual" | "auto";
+  source: "builtin" | "auto_placeholder";
+  imagePrompts: string[];
 }
 
 export interface TemplateSummary {

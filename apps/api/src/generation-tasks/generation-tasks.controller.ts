@@ -1,14 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Inject, Param, Post, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { AuthService } from "../auth/auth.service.js";
-import type { CreateGenerationTaskInput } from "./generation-tasks.service.js";
+import type { CreateGenerationPlanInput, CreateGenerationTaskInput } from "./generation-tasks.service.js";
 import { GenerationTasksService } from "./generation-tasks.service.js";
 
 @Controller("generation-tasks")
 export class GenerationTasksController {
   constructor(
-    private readonly authService: AuthService,
-    private readonly generationTasksService: GenerationTasksService
+    @Inject(AuthService) private readonly authService: AuthService,
+    @Inject(GenerationTasksService) private readonly generationTasksService: GenerationTasksService
   ) {}
 
   @Post()
@@ -20,6 +20,17 @@ export class GenerationTasksController {
     }
 
     return this.generationTasksService.create(user.id, body as CreateGenerationTaskInput);
+  }
+
+  @Post("plan")
+  async plan(@Req() request: Request, @Body() body: unknown) {
+    const user = await this.authService.getCurrentUser(request);
+
+    if (user.agreementStatus !== "accepted") {
+      throw new BadRequestException("Agreement must be accepted before planning generation tasks");
+    }
+
+    return this.generationTasksService.plan(body as CreateGenerationPlanInput);
   }
 
   @Get()

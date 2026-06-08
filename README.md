@@ -81,7 +81,15 @@ API:
 - `GET /api/generation-tasks`
 - `GET /api/generation-tasks/:taskId`
 
-The dashboard can create mock generation tasks. Creating a task reserves points, enqueues a BullMQ job, and the worker moves the task through `queued -> processing -> succeeded`. Prompts containing `[fail]` intentionally exercise the failure path and refund the held points.
+The workspace can create generation tasks. Creating a task reserves points, enqueues a BullMQ job, and the worker moves the task through `queued -> processing -> succeeded`. Result assets are persisted as each image completes, so the workspace can reveal images while a batch is still processing.
+
+Worker concurrency can be tuned in `.env`:
+
+- `WORKER_CONCURRENCY`: number of batch tasks consumed at the same time
+- `PROVIDER_IMAGE_CONCURRENCY`: maximum concurrent image requests inside each batch
+- `MOCK_PROVIDER_IMAGE_STAGGER_MS`: local Mock Provider delay between progressive image results
+
+Prompts containing `[fail]` intentionally exercise a full Mock Provider refund. Prompts containing `[fail:N]` fail the Nth Mock Provider image so partial capture and refund behavior can be tested locally.
 
 ## Phase 5 workspace and gallery
 
@@ -91,7 +99,7 @@ API:
 
 Web:
 
-- `/workspace`
+- `/workspace/home`
 - `/gallery`
 
 ## Phase 6 admin operations
@@ -122,8 +130,9 @@ Current web pages:
 - `/register`
 - `/login`
 - `/agreement`
-- `/dashboard`
-- `/workspace`
+- `/workspace/home`
+- `/dashboard` redirects to `/workspace/home`
+- `/workspace` redirects to `/workspace/home`
 - `/gallery`
 - `/templates`
 - `/admin/invite-codes`

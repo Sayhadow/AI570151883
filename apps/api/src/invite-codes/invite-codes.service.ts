@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import { InviteCodeStatus } from "@ai-image/db";
 import type { InviteCodeSummary } from "@ai-image/shared";
@@ -13,7 +13,7 @@ interface CreateInviteInput {
 
 @Injectable()
 export class InviteCodesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async list(): Promise<InviteCodeSummary[]> {
     const inviteCodes = await this.prisma.inviteCode.findMany({

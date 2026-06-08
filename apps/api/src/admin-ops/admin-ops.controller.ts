@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from "@nestjs/common";
+import { Controller, Get, Inject, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { AuthService } from "../auth/auth.service.js";
 import { AdminOpsService } from "./admin-ops.service.js";
@@ -6,8 +6,8 @@ import { AdminOpsService } from "./admin-ops.service.js";
 @Controller("admin")
 export class AdminOpsController {
   constructor(
-    private readonly authService: AuthService,
-    private readonly adminOpsService: AdminOpsService
+    @Inject(AuthService) private readonly authService: AuthService,
+    @Inject(AdminOpsService) private readonly adminOpsService: AdminOpsService
   ) {}
 
   @Get("overview")

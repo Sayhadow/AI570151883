@@ -13,6 +13,7 @@ import { TemplatesModule } from "./templates/templates.module.js";
 @Module({
   imports: [
     ConfigModule.forRoot({
+      envFilePath: [".env", "../../.env"],
       isGlobal: true
     }),
     PrismaModule,

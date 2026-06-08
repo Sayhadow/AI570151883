@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   UnauthorizedException
 } from "@nestjs/common";
@@ -45,7 +46,7 @@ type UserWithBalance = User & {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async register(input: RegisterInput, response: Response): Promise<AuthResponse> {
     const email = this.normalizeEmail(input.email);
