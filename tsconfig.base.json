@@ -12,8 +12,8 @@
     "baseUrl": ".",
     "paths": {
       "@ai-image/shared": ["packages/shared/src/index.ts"],
-      "@ai-image/db": ["packages/db/src/index.ts"]
+      "@ai-image/db": ["packages/db/src/index.ts"],
+      "@ai-image/storage": ["packages/storage/src/index.ts"]
     }
   }
 }
-

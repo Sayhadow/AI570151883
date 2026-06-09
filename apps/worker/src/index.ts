@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Worker } from "bullmq";
 import {
@@ -12,14 +11,15 @@ import {
   TaskStatus
 } from "@ai-image/db";
 import { GENERATION_QUEUE_NAME, type GenerationTaskPayload } from "@ai-image/shared";
+import { createAssetStorageFromEnv } from "@ai-image/storage";
 
 loadRootEnv();
 
 const prisma = new PrismaClient();
+const assetStorage = createAssetStorageFromEnv();
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
 const queueName = process.env.GENERATION_QUEUE_NAME ?? GENERATION_QUEUE_NAME;
 const parsedRedisUrl = new URL(redisUrl);
-const generatedAssetDir = resolveGeneratedAssetDir();
 const workerConcurrency = normalizePositiveInteger(process.env.WORKER_CONCURRENCY, 2);
 
 const connection = {
@@ -294,6 +294,7 @@ process.on("SIGTERM", () => {
 console.log(`Worker listening on queue "${queueName}" with concurrency ${workerConcurrency}`);
 
 interface GeneratedImage {
+  bucket: string;
   objectKey: string;
   mimeType: string;
   width: number;
@@ -338,7 +339,7 @@ async function persistGeneratedImage(payload: GenerationTaskPayload, image: Gene
       userId: payload.userId,
       taskId: payload.taskId,
       kind: AssetKind.RESULT,
-      bucket: "local",
+      bucket: image.bucket,
       objectKey: image.objectKey,
       mimeType: image.mimeType,
       width: image.width,
@@ -365,7 +366,7 @@ async function generateImages(payload: GenerationTaskPayload, onImageGenerated: 
     }
 
     return {
-      bucket: "local",
+      bucket: assetStorage.bucketName,
       statusCode: 200,
       durationMs: Date.now() - startedAtMs,
       images: await mapWithConcurrency(imageCount, normalizePositiveInteger(process.env.PROVIDER_IMAGE_CONCURRENCY, 2), async (index) => {
@@ -410,7 +411,7 @@ async function generateImages(payload: GenerationTaskPayload, onImageGenerated: 
   );
 
   return {
-    bucket: "local",
+    bucket: assetStorage.bucketName,
     statusCode: calls[calls.length - 1]?.statusCode ?? 200,
     durationMs: Date.now() - startedAtMs,
     images: calls.flatMap((call) => call.images),
@@ -672,16 +673,18 @@ async function downloadProviderImage(url: string, taskId: string, index: number,
 }
 
 async function saveImage(taskId: string, index: number, bytes: Buffer, width: number, height: number) {
-  await mkdir(generatedAssetDir, { recursive: true });
-
   const suffix = index + 1;
   const objectKey = `local-results/${taskId}-${suffix}.png`;
-  const outputPath = path.join(generatedAssetDir, `${taskId}-${suffix}.png`);
   const dimensions = readPngDimensions(bytes) ?? { width, height };
-  await writeFile(outputPath, bytes);
+  const stored = await assetStorage.putObject({
+    objectKey,
+    bytes,
+    contentType: "image/png"
+  });
 
   return {
-    objectKey,
+    bucket: stored.bucket,
+    objectKey: stored.objectKey,
     mimeType: "image/png",
     width: dimensions.width,
     height: dimensions.height,
@@ -897,16 +900,6 @@ function summarizeProviderCalls(calls: SingleProviderCallResult[]): Prisma.Input
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function resolveGeneratedAssetDir() {
-  const configured = process.env.GENERATED_ASSET_DIR;
-
-  if (configured) {
-    return path.isAbsolute(configured) ? configured : path.resolve(findWorkspaceRoot(), configured);
-  }
-
-  return path.join(findWorkspaceRoot(), ".generated-assets");
 }
 
 function findWorkspaceRoot() {

@@ -1,10 +1,9 @@
-import { createReadStream, readFileSync } from "node:fs";
-import { access, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Asset, AssetKind, GenerationTask } from "@ai-image/db";
 import type { ResultAssetSummary } from "@ai-image/shared";
+import { createAssetStorageFromEnv } from "@ai-image/storage";
 import { PrismaService } from "../prisma/prisma.service.js";
 
 type ResultAssetWithTask = Asset & {
@@ -19,6 +18,8 @@ interface TemplateCoverUploadInput {
 
 @Injectable()
 export class AssetsService {
+  private readonly storage = createAssetStorageFromEnv();
+
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async listResultAssets(userId: string): Promise<ResultAssetSummary[]> {
@@ -48,24 +49,23 @@ export class AssetsService {
       }
     });
 
-    if (!asset || asset.bucket !== "local" || !asset.objectKey.startsWith("local-results/")) {
+    if (!asset || !asset.objectKey.startsWith("local-results/") || !this.storage.canReadBucket(asset.bucket)) {
       throw new NotFoundException("Result asset not found");
     }
 
     const fileName = path.basename(asset.objectKey);
-    const filePath = path.join(resolveGeneratedAssetDir(), fileName);
 
     try {
-      await access(filePath);
+      const content = await this.storage.getObjectContent(asset.bucket, asset.objectKey);
+
+      return {
+        stream: content.stream,
+        fileName,
+        mimeType: asset.mimeType ?? "image/png"
+      };
     } catch {
       throw new NotFoundException("Result asset file not found");
     }
-
-    return {
-      stream: createReadStream(filePath),
-      fileName,
-      mimeType: asset.mimeType ?? "image/png"
-    };
   }
 
   async uploadTemplateCover(input: TemplateCoverUploadInput) {
@@ -73,17 +73,19 @@ export class AssetsService {
     const bytes = this.decodeDataUri(input.dataUri, mimeType);
     const extension = this.getTemplateCoverExtension(mimeType);
     const objectFileName = `${randomUUID()}.${extension}`;
-    const assetDir = path.join(resolveGeneratedAssetDir(), "template-covers");
     const objectKey = `template-covers/${objectFileName}`;
 
-    await mkdir(assetDir, { recursive: true });
-    await writeFile(path.join(assetDir, objectFileName), bytes);
+    const stored = await this.storage.putObject({
+      objectKey,
+      bytes,
+      contentType: mimeType
+    });
 
     const asset = await this.prisma.asset.create({
       data: {
         kind: AssetKind.TEMPLATE_COVER,
-        bucket: "local",
-        objectKey,
+        bucket: stored.bucket,
+        objectKey: stored.objectKey,
         mimeType,
         sizeBytes: bytes.length
       }
@@ -106,24 +108,23 @@ export class AssetsService {
       }
     });
 
-    if (!asset || asset.bucket !== "local" || !asset.objectKey.startsWith("template-covers/")) {
+    if (!asset || !asset.objectKey.startsWith("template-covers/") || !this.storage.canReadBucket(asset.bucket)) {
       throw new NotFoundException("Template cover not found");
     }
 
     const fileName = path.basename(asset.objectKey);
-    const filePath = path.join(resolveGeneratedAssetDir(), "template-covers", fileName);
 
     try {
-      await access(filePath);
+      const content = await this.storage.getObjectContent(asset.bucket, asset.objectKey);
+
+      return {
+        stream: content.stream,
+        fileName,
+        mimeType: asset.mimeType ?? "image/png"
+      };
     } catch {
       throw new NotFoundException("Template cover file not found");
     }
-
-    return {
-      stream: createReadStream(filePath),
-      fileName,
-      mimeType: asset.mimeType ?? "image/png"
-    };
   }
 
   private toResultAssetSummary(asset: ResultAssetWithTask): ResultAssetSummary {
@@ -139,7 +140,7 @@ export class AssetsService {
       kind: "result",
       bucket: asset.bucket,
       objectKey: asset.objectKey,
-      contentUrl: asset.bucket === "local" ? `/api/assets/results/${asset.id}/content` : null,
+      contentUrl: this.storage.canReadBucket(asset.bucket) ? `/api/assets/results/${asset.id}/content` : null,
       mimeType: asset.mimeType,
       width: asset.width,
       height: asset.height,
@@ -196,39 +197,5 @@ export class AssetsService {
     }
 
     return "png";
-  }
-}
-
-function resolveGeneratedAssetDir() {
-  const configured = process.env.GENERATED_ASSET_DIR;
-
-  if (configured) {
-    return path.isAbsolute(configured) ? configured : path.resolve(findWorkspaceRoot(), configured);
-  }
-
-  return path.join(findWorkspaceRoot(), ".generated-assets");
-}
-
-function findWorkspaceRoot() {
-  let current = process.cwd();
-
-  while (true) {
-    try {
-      const pkg = JSON.parse(readFileSync(path.join(current, "package.json"), "utf8")) as { name?: string };
-
-      if (pkg.name === "ai-image-platform") {
-        return current;
-      }
-    } catch {
-      // Keep walking up until the workspace root is found.
-    }
-
-    const parent = path.dirname(current);
-
-    if (parent === current) {
-      return process.cwd();
-    }
-
-    current = parent;
   }
 }

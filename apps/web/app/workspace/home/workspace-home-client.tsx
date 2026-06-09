@@ -26,7 +26,8 @@ import {
   Trash2,
   Upload,
   Users,
-  WalletCards
+  WalletCards,
+  X
 } from "lucide-react";
 import type {
   AdminGenerationTaskSummary,
@@ -65,6 +66,12 @@ type ReferenceImage = {
   fileName: string;
   dataUri: string;
 };
+type ImagePreview = {
+  downloadUrl: string;
+  imageUrl: string;
+  prompt: string;
+  title: string;
+};
 type ShowcaseTemplate = Pick<TemplateSummary, "id" | "title" | "description" | "defaultParams">;
 type HeroSparkle = {
   id: number;
@@ -85,6 +92,53 @@ const templateCategories: Array<{ id: TemplateCategory; label: string }> = [
   { id: "promotion", label: "活动图" }
 ];
 const heroTitleWords = ["电商视觉", "产品主图", "产品宣发图", "使用场景图"];
+const homeModeCardImageGroups = [
+  ["/mode-cards/sayhadow-mode-01.jpg", "/mode-cards/sayhadow-mode-02.jpg", "/mode-cards/sayhadow-mode-03.jpg"],
+  ["/mode-cards/sayhadow-mode-04.jpg", "/mode-cards/sayhadow-mode-05.jpg", "/mode-cards/sayhadow-mode-06.jpg"],
+  ["/mode-cards/sayhadow-mode-07.jpg", "/mode-cards/sayhadow-mode-08.jpg", "/mode-cards/sayhadow-mode-09.jpg"],
+  ["/mode-cards/sayhadow-mode-10.jpg", "/mode-cards/sayhadow-mode-11.jpg", "/mode-cards/sayhadow-mode-12.jpg"]
+];
+const generationModeCardConfigs: Array<{
+  defaultCount: number;
+  description: string;
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  imageUrls: string[];
+  preset: GenerationPreset;
+  title: string;
+}> = [
+  {
+    defaultCount: 3,
+    description: "生成主图、细节、场景和卖点图，适合完整商品套图。",
+    icon: Sparkles,
+    imageUrls: homeModeCardImageGroups[0],
+    preset: "ecommerce_suite",
+    title: "电商套图"
+  },
+  {
+    defaultCount: 3,
+    description: "选择统一视觉风格，批量生成不同画面的商品主图。",
+    icon: GalleryHorizontal,
+    imageUrls: homeModeCardImageGroups[1],
+    preset: "ecommerce_main",
+    title: "电商主图"
+  },
+  {
+    defaultCount: 3,
+    description: "保持商品一致，生成不同使用环境和场景图。",
+    icon: LayoutTemplate,
+    imageUrls: homeModeCardImageGroups[2],
+    preset: "ecommerce_scene",
+    title: "电商场景图"
+  },
+  {
+    defaultCount: 1,
+    description: "自由输入 Prompt，适合临时创作、改图和单张测试。",
+    icon: ImagePlus,
+    imageUrls: homeModeCardImageGroups[3],
+    preset: "custom",
+    title: "产品宣发"
+  }
+];
 const fallbackTemplatePreviewUrl =
   "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80";
 const ecommerceMainStyles = [
@@ -115,6 +169,7 @@ const defaultEcommerceMainStyleId: EcommerceMainStyleId = "premium_minimal";
 export function WorkspaceHomeClient() {
   const [activeView, setActiveView] = useState<WorkspaceView>("home");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [generationNavOpen, setGenerationNavOpen] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [balance, setBalance] = useState<PointBalanceSummary | null>(null);
   const [transactions, setTransactions] = useState<PointTransactionSummary[]>([]);
@@ -139,6 +194,7 @@ export function WorkspaceHomeClient() {
   const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
   const [appliedTemplateId, setAppliedTemplateId] = useState<string | null>(null);
   const [galleryQuery, setGalleryQuery] = useState("");
+  const [imagePreview, setImagePreview] = useState<ImagePreview | null>(null);
   const [adminTaskQuery, setAdminTaskQuery] = useState("");
   const [adminTaskStatus, setAdminTaskStatus] = useState<GenerationStatus | "all">("all");
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
@@ -561,6 +617,18 @@ export function WorkspaceHomeClient() {
     window.location.href = "/login";
   }
 
+  function selectGenerationMode(preset: GenerationPreset) {
+    setGenerationPreset(preset);
+    setImageCount(preset === "custom" ? 1 : 3);
+    setGenerationNavOpen(true);
+    setActiveView("create");
+  }
+
+  function toggleGenerationNav() {
+    setActiveView("create");
+    setGenerationNavOpen((current) => (activeView === "create" ? !current : true));
+  }
+
   if (error) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
@@ -609,7 +677,15 @@ export function WorkspaceHomeClient() {
 
         <nav className="flex-1 space-y-1 px-3 py-4">
           <SidebarItem active={activeView === "home"} collapsed={sidebarCollapsed} icon={Home} label="首页" onClick={() => setActiveView("home")} />
-          <SidebarItem active={activeView === "create"} collapsed={sidebarCollapsed} icon={ImagePlus} label="图片生成" onClick={() => setActiveView("create")} />
+          <SidebarItem active={activeView === "create"} collapsed={sidebarCollapsed} icon={ImagePlus} label="图片生成" onClick={toggleGenerationNav} />
+          {generationNavOpen ? (
+            <div className={`${sidebarCollapsed ? "mt-1 grid justify-items-center gap-1" : "mt-1 space-y-1 pl-5"}`}>
+              <SidebarSubItem active={activeView === "create" && generationPreset === "ecommerce_suite"} collapsed={sidebarCollapsed} label="电商套图" onClick={() => selectGenerationMode("ecommerce_suite")} />
+              <SidebarSubItem active={activeView === "create" && generationPreset === "ecommerce_main"} collapsed={sidebarCollapsed} label="电商主图" onClick={() => selectGenerationMode("ecommerce_main")} />
+              <SidebarSubItem active={activeView === "create" && generationPreset === "ecommerce_scene"} collapsed={sidebarCollapsed} label="电商场景图" onClick={() => selectGenerationMode("ecommerce_scene")} />
+              <SidebarSubItem active={activeView === "create" && generationPreset === "custom"} collapsed={sidebarCollapsed} label="产品宣发" onClick={() => selectGenerationMode("custom")} />
+            </div>
+          ) : null}
           <SidebarItem active={activeView === "templates"} collapsed={sidebarCollapsed} icon={LayoutTemplate} label="模板广场" onClick={() => setActiveView("templates")} />
           <SidebarItem active={activeView === "gallery"} collapsed={sidebarCollapsed} icon={GalleryHorizontal} label="结果图库" onClick={() => setActiveView("gallery")} />
           <SidebarItem active={activeView === "points"} collapsed={sidebarCollapsed} icon={WalletCards} label="点数流水" onClick={() => setActiveView("points")} />
@@ -704,6 +780,7 @@ export function WorkspaceHomeClient() {
               setSelectedResolution={setSelectedResolution}
               useTemplate={useTemplate}
               refillFromTask={refillFromTask}
+              openImagePreview={setImagePreview}
             />
           ) : null}
           {activeView === "create" ? (
@@ -741,11 +818,12 @@ export function WorkspaceHomeClient() {
               removeReferenceImage={removeReferenceImage}
               replaceReferenceImage={replaceReferenceImage}
               refillFromTask={refillFromTask}
+              openImagePreview={setImagePreview}
             />
           ) : null}
           {activeView === "templates" ? <TemplatesMarketplace templates={templates} useTemplate={useTemplate} /> : null}
           {activeView === "gallery" ? (
-            <GalleryView assets={filteredAssets} query={galleryQuery} setQuery={setGalleryQuery} copyPrompt={copyPrompt} />
+            <GalleryView assets={filteredAssets} query={galleryQuery} setQuery={setGalleryQuery} copyPrompt={copyPrompt} openImagePreview={setImagePreview} />
           ) : null}
           {activeView === "points" ? <PointsView balance={balance} transactions={transactions} /> : null}
           {activeView === "admin-users" && isAdmin ? (
@@ -774,7 +852,36 @@ export function WorkspaceHomeClient() {
           {activeView === "settings" ? <SettingsView user={user} balance={balance} /> : null}
         </div>
       </section>
+      {imagePreview ? <ImagePreviewModal preview={imagePreview} onClose={() => setImagePreview(null)} /> : null}
     </main>
+  );
+}
+
+function ImagePreviewModal({ preview, onClose }: { preview: ImagePreview; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/78 p-4 backdrop-blur-md" role="dialog" aria-modal={true}>
+      <button className="absolute inset-0 cursor-default" aria-label="关闭预览" type="button" onClick={onClose} />
+      <section className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#09090b] text-white shadow-2xl">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold">{preview.title}</h2>
+            <p className="mt-1 line-clamp-1 text-xs text-slate-400">{preview.prompt}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <a className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-semibold text-slate-950 hover:bg-slate-200" download={true} href={preview.downloadUrl}>
+              <Download className="h-4 w-4" aria-hidden={true} />
+              下载
+            </a>
+            <button className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-slate-200 hover:bg-white/10" type="button" aria-label="关闭预览" onClick={onClose}>
+              <X className="h-4 w-4" aria-hidden={true} />
+            </button>
+          </div>
+        </div>
+        <div className="grid min-h-0 flex-1 place-items-center overflow-auto bg-black p-4">
+          <img alt={preview.prompt} className="max-h-[78vh] max-w-full rounded-lg object-contain" src={preview.imageUrl} />
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -800,7 +907,8 @@ function HomeView({
   setPromptText,
   setSelectedResolution,
   useTemplate,
-  refillFromTask
+  refillFromTask,
+  openImagePreview
 }: {
   balance: PointBalanceSummary;
   createTask: (event?: FormEvent<HTMLFormElement>) => Promise<void>;
@@ -824,6 +932,7 @@ function HomeView({
   setSelectedResolution: (resolution: Resolution) => void;
   useTemplate: (template: TemplateSummary) => void;
   refillFromTask: (task: GenerationTaskSummary) => void;
+  openImagePreview: (preview: ImagePreview) => void;
 }) {
   const showcaseTemplates = templates.slice(0, 10);
   const fallbackShowcaseTemplates = getFallbackShowcaseTemplates();
@@ -1076,46 +1185,20 @@ function HomeView({
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-        <HomeModeCard
-          description="生成主图、细节、场景和卖点图，适合完整商品套图。"
-          icon={Sparkles}
-          title="电商套图"
-          onClick={() => {
-            setGenerationPreset("ecommerce_suite");
-            setImageCount(3);
-            setActiveView("create");
-          }}
-        />
-        <HomeModeCard
-          description="选择统一视觉风格，批量生成不同画面的商品主图。"
-          icon={GalleryHorizontal}
-          title="电商主图"
-          onClick={() => {
-            setGenerationPreset("ecommerce_main");
-            setImageCount(3);
-            setActiveView("create");
-          }}
-        />
-        <HomeModeCard
-          description="保持商品一致，生成不同使用环境和场景图。"
-          icon={LayoutTemplate}
-          title="电商场景图"
-          onClick={() => {
-            setGenerationPreset("ecommerce_scene");
-            setImageCount(3);
-            setActiveView("create");
-          }}
-        />
-        <HomeModeCard
-          description="自由输入 Prompt，适合临时创作、改图和单张测试。"
-          icon={ImagePlus}
-          title="产品宣发"
-          onClick={() => {
-            setGenerationPreset("custom");
-            setImageCount(1);
-            setActiveView("create");
-          }}
-        />
+        {generationModeCardConfigs.map((card) => (
+          <HomeModeCard
+            description={card.description}
+            icon={card.icon}
+            imageUrls={card.imageUrls}
+            key={card.preset}
+            title={card.title}
+            onClick={() => {
+              setGenerationPreset(card.preset);
+              setImageCount(card.defaultCount);
+              setActiveView("create");
+            }}
+          />
+        ))}
       </section>
 
       <section>
@@ -1145,7 +1228,7 @@ function HomeView({
             查看全部
           </button>
         </div>
-        <ResultGrid tasks={resultTasks} compact={true} />
+        <ResultGrid tasks={resultTasks} compact={true} openImagePreview={openImagePreview} />
       </section>
     </div>
   );
@@ -1263,30 +1346,60 @@ function OpenAiLogo({ className }: { className?: string }) {
 }
 
 function HomeModeCard({
+  active = false,
   description,
   icon: Icon,
+  imageUrls,
   onClick,
   title
 }: {
+  active?: boolean;
   description: string;
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  imageUrls: string[];
   onClick: () => void;
   title: string;
 }) {
   return (
     <button
-      className="group rounded-[1.4rem] border border-white/10 bg-white/[0.055] p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300/50 hover:bg-white/[0.08]"
+      className={`group relative min-h-[21rem] overflow-hidden rounded-[1.6rem] border p-3 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:border-sky-300/50 hover:bg-white/[0.08] hover:shadow-[0_22px_80px_rgba(0,0,0,0.32)] ${
+        active ? "border-sky-300/55 bg-white/[0.09] shadow-[0_22px_80px_rgba(0,0,0,0.32)]" : "border-white/10 bg-white/[0.055]"
+      }`}
       type="button"
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-4">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-sky-200 transition group-hover:bg-sky-300 group-hover:text-slate-950">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/12 to-black/82" />
+      <div className="relative grid h-48 grid-cols-[1.1fr_0.9fr] gap-2 overflow-hidden rounded-[1.25rem]">
+        <img
+          alt={`${title} preview 1`}
+          className="h-full w-full rounded-[1.05rem] object-cover transition duration-500 group-hover:scale-105"
+          src={imageUrls[0]}
+        />
+        <div className="grid grid-rows-2 gap-2">
+          <img
+            alt={`${title} preview 2`}
+            className="h-full min-h-0 w-full rounded-[1.05rem] object-cover transition duration-500 group-hover:scale-105"
+            src={imageUrls[1]}
+          />
+          <img
+            alt={`${title} preview 3`}
+            className="h-full min-h-0 w-full rounded-[1.05rem] object-cover transition duration-500 group-hover:scale-105"
+            src={imageUrls[2]}
+          />
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-3 rounded-[1.25rem] ring-1 ring-white/10" />
+      <div className="absolute left-5 top-5 flex items-center gap-2">
+        <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/15 bg-black/35 text-white shadow-lg backdrop-blur-md transition group-hover:bg-white group-hover:text-slate-950">
           <Icon className="h-5 w-5" aria-hidden={true} />
         </span>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300">进入模式</span>
+        <span className="hidden">进入模式</span>
       </div>
-      <h3 className="mt-5 text-2xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 min-h-12 text-sm leading-6 text-slate-400">{description}</p>
+      <div className="relative mt-4 flex items-end justify-between gap-3 px-2">
+        <h3 className="text-2xl font-semibold text-white">{title}</h3>
+          <span className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200 backdrop-blur">{active ? "当前模式" : "进入模式"}</span>
+      </div>
+      <p className="relative mt-3 line-clamp-2 min-h-12 px-2 text-sm leading-6 text-slate-300">{description}</p>
     </button>
   );
 }
@@ -1505,7 +1618,8 @@ function CreateView({
   addReferenceImages,
   removeReferenceImage,
   replaceReferenceImage,
-  refillFromTask
+  refillFromTask,
+  openImagePreview
 }: {
   appliedTemplate: TemplateSummary | null;
   generationPreset: GenerationPreset;
@@ -1540,6 +1654,7 @@ function CreateView({
   removeReferenceImage: (index: number) => void;
   replaceReferenceImage: (index: number, file: File | undefined) => Promise<void>;
   refillFromTask: (task: GenerationTaskSummary) => void;
+  openImagePreview: (preview: ImagePreview) => void;
 }) {
   const suitePromptsReady =
     generationPreset !== "ecommerce_suite" ||
@@ -1548,7 +1663,7 @@ function CreateView({
   return (
     <div className="space-y-6">
       <form className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]" onSubmit={createTask}>
-        <section className="relative overflow-hidden rounded-[2rem] border border-sky-400/30 bg-black/20 p-5 shadow-[0_0_80px_rgba(56,189,248,0.12)] md:p-6">
+        <section className="sayhadow-create-composer relative overflow-hidden rounded-[2rem] bg-black/20 p-5 md:p-6">
           <div className="sayhadow-live-panel-glow pointer-events-none absolute inset-0" />
           <div className="relative flex items-center gap-2">
             <ImagePlus className="h-5 w-5 text-sky-300" aria-hidden={true} />
@@ -1860,7 +1975,7 @@ function CreateView({
           </button>
         </section>
 
-        <InlineResultPanel assets={recentAssets.slice(0, 2)} tasks={recentTasks.slice(0, 2)} />
+        <InlineResultPanel assets={recentAssets.slice(0, 2)} tasks={recentTasks.slice(0, 2)} openImagePreview={openImagePreview} />
       </aside>
       </form>
 
@@ -1889,7 +2004,7 @@ function CreateView({
               <LiveTaskCard key={task.id} task={task} refillFromTask={refillFromTask} />
             ))}
           {recentAssets.map((asset) => (
-            <AssetCard asset={asset} copyPrompt={copyPrompt} key={asset.id} />
+            <AssetCard asset={asset} copyPrompt={copyPrompt} key={asset.id} openImagePreview={openImagePreview} />
           ))}
         </div>
 
@@ -1903,12 +2018,14 @@ function GalleryView({
   assets,
   query,
   setQuery,
-  copyPrompt
+  copyPrompt,
+  openImagePreview
 }: {
   assets: ResultAssetSummary[];
   query: string;
   setQuery: (query: string) => void;
   copyPrompt: (prompt: string) => Promise<void>;
+  openImagePreview: (preview: ImagePreview) => void;
 }) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set());
@@ -2019,7 +2136,7 @@ function GalleryView({
       ) : null}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {assets.map((asset) => (
-          <AssetCard asset={asset} copyPrompt={copyPrompt} key={asset.id} selected={selectedAssetIds.has(asset.id)} selectionMode={selectionMode} toggleSelected={toggleSelected} />
+          <AssetCard asset={asset} copyPrompt={copyPrompt} key={asset.id} selected={selectedAssetIds.has(asset.id)} selectionMode={selectionMode} toggleSelected={toggleSelected} openImagePreview={openImagePreview} />
         ))}
       </div>
       {assets.length === 0 ? <EmptyState text="暂无结果图" /> : null}
@@ -2038,10 +2155,10 @@ function SuiteFeatureCards({
   setGenerationPreset: (preset: GenerationPreset) => void;
   setImageCount: (count: number) => void;
 }) {
-  const selectPreset = (preset: Exclude<GenerationPreset, "custom">) => {
-    const counts = getPresetMeta(preset).counts;
-    setGenerationPreset(preset);
-    setImageCount(counts.includes(imageCount) ? imageCount : counts[0]);
+  const selectPreset = (card: (typeof generationModeCardConfigs)[number]) => {
+    const counts = card.preset === "custom" ? [card.defaultCount] : getPresetMeta(card.preset).counts;
+    setGenerationPreset(card.preset);
+    setImageCount(counts.includes(imageCount) ? imageCount : card.defaultCount);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -2054,84 +2171,20 @@ function SuiteFeatureCards({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <PresetFeatureCard
-          active={generationPreset === "ecommerce_suite"}
-          description="自动生成覆盖主图、细节、场景和卖点的电商套图。"
-          imageUrl="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80"
-          label="生成电商套图"
-          onClick={() => selectPreset("ecommerce_suite")}
-        />
-        <PresetFeatureCard
-          active={generationPreset === "ecommerce_main"}
-          description="选择一种视觉风格，批量生成最多 50 张不同画面的电商主图。"
-          imageUrl="https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=900&q=80"
-          label="生成电商主图"
-          onClick={() => selectPreset("ecommerce_main")}
-        />
-        <PresetFeatureCard
-          active={generationPreset === "ecommerce_scene"}
-          description="保持同一视觉风格，生成最多 10 张不同使用场景图。"
-          imageUrl="https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=900&q=80"
-          label="生成电商场景图"
-          onClick={() => selectPreset("ecommerce_scene")}
-        />
-
-        {["功能卡片 4", "功能卡片 5"].map((title) => (
-          <article className="rounded-[1.4rem] border border-dashed border-white/15 bg-white/[0.04] p-4" key={title}>
-            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400">
-              <Sparkles className="h-4 w-4" aria-hidden={true} />
-            </div>
-            <h3 className="mt-4 text-base font-semibold text-slate-600">{title}</h3>
-            <p className="mt-2 min-h-16 text-sm leading-6 text-slate-500">预留入口，后续确定功能后再接入。</p>
-            <button className="mt-4 h-9 w-full rounded-md border border-slate-200 text-sm font-semibold text-slate-400" disabled={true} type="button">
-              待配置
-            </button>
-          </article>
+      <div className="mt-5 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        {generationModeCardConfigs.map((card) => (
+          <HomeModeCard
+            active={generationPreset === card.preset}
+            description={card.description}
+            icon={card.icon}
+            imageUrls={card.imageUrls}
+            key={card.preset}
+            title={card.title}
+            onClick={() => selectPreset(card)}
+          />
         ))}
       </div>
     </section>
-  );
-}
-
-function PresetFeatureCard({
-  active,
-  description,
-  imageUrl,
-  label,
-  onClick
-}: {
-  active: boolean;
-  description: string;
-  imageUrl: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={`group overflow-hidden rounded-[1.4rem] border text-left shadow-sm transition hover:-translate-y-0.5 ${
-        active ? "border-sky-300/70 bg-sky-300/10 text-white" : "border-white/10 bg-white/[0.055] hover:border-white/25"
-      }`}
-      type="button"
-      onClick={onClick}
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-black">
-        <img alt={label} className="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105" src={imageUrl} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-        <div className="absolute bottom-3 left-3 right-3">
-          <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${active ? "bg-sky-300 text-slate-950" : "bg-white/15 text-white"}`}>
-            {active ? "已进入模式" : "进入模式"}
-          </div>
-          <h3 className="mt-3 text-base font-semibold text-white">{label}</h3>
-        </div>
-      </div>
-      <div className="p-4">
-        <p className="min-h-16 text-sm leading-6 text-slate-400">{description}</p>
-        <div className="mt-3 rounded-full bg-white/10 px-3 py-2 text-center text-xs font-semibold text-slate-300">
-          张数选择会出现在上方工作台
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -2762,6 +2815,32 @@ function SidebarItem({
   );
 }
 
+function SidebarSubItem({
+  active,
+  collapsed,
+  label,
+  onClick
+}: {
+  active: boolean;
+  collapsed: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`group flex h-9 w-full items-center gap-2 rounded-lg text-xs font-semibold transition ${
+        active ? "bg-white/14 text-white" : "text-slate-500 hover:bg-white/7 hover:text-slate-300"
+      } ${collapsed ? "w-9 justify-center px-0" : "px-3"}`}
+      aria-label={label}
+      type="button"
+      onClick={onClick}
+    >
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition ${active ? "bg-white" : "bg-slate-600 group-hover:bg-slate-300"}`} />
+      {!collapsed ? <span>{label}</span> : null}
+    </button>
+  );
+}
+
 function MetricCard({
   icon: Icon,
   title,
@@ -2803,7 +2882,15 @@ function TaskMiniRow({ task, refillFromTask }: { task: GenerationTaskSummary; re
   );
 }
 
-function InlineResultPanel({ assets, tasks }: { assets: ResultAssetSummary[]; tasks: GenerationTaskSummary[] }) {
+function InlineResultPanel({
+  assets,
+  tasks,
+  openImagePreview
+}: {
+  assets: ResultAssetSummary[];
+  tasks: GenerationTaskSummary[];
+  openImagePreview: (preview: ImagePreview) => void;
+}) {
   const liveTasks = tasks.filter((task) => task.status === "queued" || task.status === "processing");
 
   return (
@@ -2825,13 +2912,25 @@ function InlineResultPanel({ assets, tasks }: { assets: ResultAssetSummary[]; ta
           const url = resultAssetUrl(asset);
 
           return (
-            <a className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 transition hover:bg-slate-100" href={url} key={asset.id} rel="noreferrer" target="_blank">
+            <button
+              className="flex w-full gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-left transition hover:bg-slate-100"
+              key={asset.id}
+              type="button"
+              onClick={() =>
+                openImagePreview({
+                  downloadUrl: resultAssetDownloadUrl(asset),
+                  imageUrl: url,
+                  prompt: asset.prompt,
+                  title: "查看结果图"
+                })
+              }
+            >
               <img alt={asset.prompt} className="h-16 w-16 shrink-0 rounded-md object-cover" src={url} />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold">查看结果图</span>
                 <span className="mt-1 line-clamp-2 block text-xs text-slate-500">{asset.prompt}</span>
               </span>
-            </a>
+            </button>
           );
         })}
         {liveTasks.length === 0 && assets.length === 0 ? <EmptyState text="提交任务后显示在这里" /> : null}
@@ -2861,24 +2960,46 @@ function LiveTaskCard({ task, refillFromTask }: { task: GenerationTaskSummary; r
   );
 }
 
-function ResultGrid({ tasks, compact }: { tasks: GenerationTaskSummary[]; compact?: boolean }) {
+function ResultGrid({
+  tasks,
+  compact,
+  openImagePreview
+}: {
+  tasks: GenerationTaskSummary[];
+  compact?: boolean;
+  openImagePreview: (preview: ImagePreview) => void;
+}) {
   return (
     <div className={`mt-5 grid gap-4 ${compact ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
       {tasks.map((task) => (
-        <TaskResultCard key={task.id} task={task} />
+        <TaskResultCard key={task.id} task={task} openImagePreview={openImagePreview} />
       ))}
       {tasks.length === 0 ? <EmptyState text="暂无生成结果" /> : null}
     </div>
   );
 }
 
-function TaskResultCard({ task }: { task: GenerationTaskSummary }) {
+function TaskResultCard({ task, openImagePreview }: { task: GenerationTaskSummary; openImagePreview: (preview: ImagePreview) => void }) {
   const asset = task.assets[0];
+  const url = asset ? assetUrl(asset) : "";
 
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       {asset ? (
-        <img alt={task.prompt} className="aspect-square w-full object-cover" src={assetUrl(asset)} />
+        <button
+          className="block w-full"
+          type="button"
+          onClick={() =>
+            openImagePreview({
+              downloadUrl: assetDownloadUrl(asset),
+              imageUrl: url,
+              prompt: task.prompt,
+              title: "查看生成结果"
+            })
+          }
+        >
+          <img alt={task.prompt} className="aspect-square w-full object-cover" src={url} />
+        </button>
       ) : (
         <div className="grid aspect-square place-items-center bg-slate-100 text-sm text-slate-500">{formatTaskStatus(task.status)}</div>
       )}
@@ -2890,10 +3011,21 @@ function TaskResultCard({ task }: { task: GenerationTaskSummary }) {
         </div>
         {asset ? (
           <div className="mt-4 flex gap-2">
-            <a className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-slate-200 text-sm font-semibold" href={assetUrl(asset)} rel="noreferrer" target="_blank">
-              打开
-            </a>
-            <a className="inline-flex h-9 w-10 items-center justify-center rounded-md border border-slate-200" download={true} href={assetUrl(asset)} title="下载">
+            <button
+              className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-slate-200 text-sm font-semibold"
+              type="button"
+              onClick={() =>
+                openImagePreview({
+                  downloadUrl: assetDownloadUrl(asset),
+                  imageUrl: url,
+                  prompt: task.prompt,
+                  title: "查看生成结果"
+                })
+              }
+            >
+              预览
+            </button>
+          <a className="inline-flex h-9 w-10 items-center justify-center rounded-md border border-slate-200" download={true} href={assetDownloadUrl(asset)} title="下载">
               <Download className="h-4 w-4" aria-hidden={true} />
             </a>
           </div>
@@ -2906,17 +3038,25 @@ function TaskResultCard({ task }: { task: GenerationTaskSummary }) {
 function AssetCard({
   asset,
   copyPrompt,
+  openImagePreview,
   selected = false,
   selectionMode = false,
   toggleSelected
 }: {
   asset: ResultAssetSummary;
   copyPrompt: (prompt: string) => Promise<void>;
+  openImagePreview: (preview: ImagePreview) => void;
   selected?: boolean;
   selectionMode?: boolean;
   toggleSelected?: (assetId: string) => void;
 }) {
   const url = resultAssetUrl(asset);
+  const preview = {
+    downloadUrl: resultAssetDownloadUrl(asset),
+    imageUrl: url,
+    prompt: asset.prompt,
+    title: "查看结果图"
+  };
 
   return (
     <article className={`relative overflow-hidden rounded-lg border bg-white shadow-sm ${selected ? "border-slate-950 ring-2 ring-slate-950/20" : "border-slate-200"}`}>
@@ -2931,18 +3071,20 @@ function AssetCard({
           {selected ? <CheckSquare className="h-4 w-4" aria-hidden={true} /> : <Square className="h-4 w-4" aria-hidden={true} />}
         </button>
       ) : null}
-      <img alt={asset.prompt} className="aspect-square w-full object-cover" src={url} />
+      <button className="block w-full" type="button" onClick={() => (selectionMode ? toggleSelected?.(asset.id) : openImagePreview(preview))}>
+        <img alt={asset.prompt} className="aspect-square w-full object-cover" src={url} />
+      </button>
       <div className="p-4">
         <div className="line-clamp-2 min-h-10 text-sm font-semibold">{asset.prompt}</div>
         <div className="mt-3 text-xs text-slate-500">{new Date(asset.createdAt).toLocaleString()}</div>
         <div className="mt-4 flex gap-2">
-          <a className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-slate-200 text-sm font-semibold" href={url} rel="noreferrer" target="_blank">
-            打开
-          </a>
+          <button className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-slate-200 text-sm font-semibold" type="button" onClick={() => openImagePreview(preview)}>
+            预览
+          </button>
           <button className="inline-flex h-9 w-10 items-center justify-center rounded-md border border-slate-200" type="button" title="复制 Prompt" onClick={() => void copyPrompt(asset.prompt)}>
             <Copy className="h-4 w-4" aria-hidden={true} />
           </button>
-          <a className="inline-flex h-9 w-10 items-center justify-center rounded-md border border-slate-200" download={true} href={url} title="下载">
+          <a className="inline-flex h-9 w-10 items-center justify-center rounded-md border border-slate-200" download={true} href={resultAssetDownloadUrl(asset)} title="下载">
             <Download className="h-4 w-4" aria-hidden={true} />
           </a>
         </div>
@@ -3136,8 +3278,18 @@ function assetUrl(asset: GenerationTaskSummary["assets"][number]) {
   return asset.contentUrl ? absoluteUrl(asset.contentUrl) : `${getApiBaseUrl()}/api/assets/results/${asset.id}/content`;
 }
 
+function assetDownloadUrl(asset: GenerationTaskSummary["assets"][number]) {
+  const url = assetUrl(asset);
+  return `${url}${url.includes("?") ? "&" : "?"}download=1`;
+}
+
 function resultAssetUrl(asset: ResultAssetSummary) {
   return asset.contentUrl ? absoluteUrl(asset.contentUrl) : `${getApiBaseUrl()}/api/assets/results/${asset.id}/content`;
+}
+
+function resultAssetDownloadUrl(asset: ResultAssetSummary) {
+  const url = resultAssetUrl(asset);
+  return `${url}${url.includes("?") ? "&" : "?"}download=1`;
 }
 
 function templatePreviewSrc(previewUrl: string) {
@@ -3150,7 +3302,7 @@ function templatePreviewSrc(previewUrl: string) {
 
 async function downloadResultAssets(assets: ResultAssetSummary[], onProgress: (completed: number, total: number) => void) {
   for (const [index, asset] of assets.entries()) {
-    const response = await fetch(resultAssetUrl(asset), {
+    const response = await fetch(resultAssetDownloadUrl(asset), {
       credentials: "include"
     });
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Req, StreamableFile } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Post, Query, Req, StreamableFile } from "@nestjs/common";
 import type { Request } from "express";
 import { AuthService } from "../auth/auth.service.js";
 import { AssetsService } from "./assets.service.js";
@@ -17,13 +17,14 @@ export class AssetsController {
   }
 
   @Get("results/:assetId/content")
-  async resultContent(@Req() request: Request, @Param("assetId") assetId: string) {
+  async resultContent(@Req() request: Request, @Param("assetId") assetId: string, @Query("download") download?: string) {
     const user = await this.authService.getCurrentUser(request);
     const asset = await this.assetsService.getResultAssetContent(user.id, assetId);
+    const dispositionType = download === "1" || download === "true" ? "attachment" : "inline";
 
     return new StreamableFile(asset.stream, {
       type: asset.mimeType,
-      disposition: `inline; filename="${asset.fileName}"`
+      disposition: `${dispositionType}; filename="${asset.fileName}"`
     });
   }
 

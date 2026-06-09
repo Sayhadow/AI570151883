@@ -10,7 +10,7 @@ coverage/
 .logs/
 *.tsbuildinfo
 uploads/
-storage/
+/storage/
 .tmp/
 .generated-assets/
 .turbo/
