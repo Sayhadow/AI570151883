@@ -5,7 +5,7 @@ import { AppModule } from "./app.module.js";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
-  const port = Number(process.env.API_PORT ?? 4000);
+  const port = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
   const bodyLimit = process.env.API_BODY_LIMIT ?? "10mb";
 
   app.useBodyParser("json", { limit: bodyLimit });
