@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "nest build",
+    "build": "corepack pnpm --filter @ai-image/shared build && corepack pnpm --filter @ai-image/db build && corepack pnpm --filter @ai-image/storage build && nest build",
     "start": "node dist/apps/api/src/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit"

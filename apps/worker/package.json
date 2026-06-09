@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
+    "build": "corepack pnpm --filter @ai-image/shared build && corepack pnpm --filter @ai-image/db build && corepack pnpm --filter @ai-image/storage build && tsc -p tsconfig.json",
+    "start": "node dist/apps/worker/src/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
