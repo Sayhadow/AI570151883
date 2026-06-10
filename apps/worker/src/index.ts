@@ -27,6 +27,7 @@ const connection = {
   port: Number(parsedRedisUrl.port || 6379),
   username: parsedRedisUrl.username || undefined,
   password: parsedRedisUrl.password || undefined,
+  tls: parsedRedisUrl.protocol === "rediss:" ? {} : undefined,
   maxRetriesPerRequest: null
 };
 
