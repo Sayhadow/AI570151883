@@ -6,6 +6,7 @@ import {
   PointTransactionStatus,
   PointTransactionType,
   Prisma,
+  TaskStatus,
   User,
   UserBalance,
   UserRole
@@ -85,7 +86,7 @@ export class PointsService {
     return this.prisma.$transaction(async (tx) => {
       const targetUser = await tx.user.findUnique({
         where: { id: targetUserId },
-        include: { balance: true }
+        include: this.adminUserInclude()
       });
 
       if (!targetUser) {
@@ -139,6 +140,153 @@ export class PointsService {
         }),
         transaction: this.toTransactionSummary(transaction)
       };
+    });
+  }
+
+  async deductPoints(
+    actorId: string,
+    targetUserId: string,
+    input: GrantPointsInput
+  ): Promise<AdminPointGrantResponse> {
+    const amount = this.normalizePositiveAmount(input.amount);
+    const reason = this.normalizeReason(input.reason) ?? "Admin points deduction";
+
+    return this.prisma.$transaction(async (tx) => {
+      const targetUser = await tx.user.findUnique({
+        where: { id: targetUserId },
+        include: this.adminUserInclude()
+      });
+
+      if (!targetUser) {
+        throw new NotFoundException("User not found");
+      }
+
+      await tx.userBalance.upsert({
+        where: { userId: targetUserId },
+        update: {},
+        create: {
+          userId: targetUserId,
+          available: 0,
+          held: 0
+        }
+      });
+
+      const updateResult = await tx.userBalance.updateMany({
+        where: {
+          userId: targetUserId,
+          available: { gte: amount }
+        },
+        data: {
+          available: { decrement: amount }
+        }
+      });
+
+      if (updateResult.count !== 1) {
+        throw new BadRequestException("Insufficient available points");
+      }
+
+      const balance = await tx.userBalance.findUniqueOrThrow({
+        where: { userId: targetUserId }
+      });
+
+      const transaction = await tx.pointTransaction.create({
+        data: {
+          userId: targetUserId,
+          type: PointTransactionType.ADJUSTMENT,
+          status: PointTransactionStatus.COMMITTED,
+          amount: -amount,
+          balanceAfter: balance.available,
+          heldAfter: balance.held,
+          reason,
+          metadata: { actorId } satisfies Prisma.InputJsonValue,
+          committedAt: new Date()
+        }
+      });
+
+      await tx.adminLog.create({
+        data: {
+          actorId,
+          action: "POINTS_DEDUCT",
+          targetType: "User",
+          targetId: targetUserId,
+          metadata: {
+            amount,
+            reason,
+            transactionId: transaction.id
+          } satisfies Prisma.InputJsonValue
+        }
+      });
+
+      return {
+        user: this.toAdminUserSummary({
+          ...targetUser,
+          balance
+        }),
+        transaction: this.toTransactionSummary(transaction)
+      };
+    });
+  }
+
+  async deleteUser(actorId: string, targetUserId: string) {
+    if (actorId === targetUserId) {
+      throw new BadRequestException("You cannot delete your own admin account");
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const targetUser = await tx.user.findUnique({
+        where: { id: targetUserId },
+        include: {
+          balance: true
+        }
+      });
+
+      if (!targetUser) {
+        throw new NotFoundException("User not found");
+      }
+
+      if ((targetUser.balance?.held ?? 0) > 0) {
+        throw new BadRequestException("User has held points and cannot be deleted");
+      }
+
+      const activeTaskCount = await tx.generationTask.count({
+        where: {
+          userId: targetUserId,
+          status: { in: [TaskStatus.QUEUED, TaskStatus.PROCESSING] }
+        }
+      });
+
+      if (activeTaskCount > 0) {
+        throw new BadRequestException("User has active generation tasks and cannot be deleted");
+      }
+
+      if (targetUser.role === UserRole.ADMIN) {
+        const adminCount = await tx.user.count({
+          where: { role: UserRole.ADMIN }
+        });
+
+        if (adminCount <= 1) {
+          throw new BadRequestException("The last admin account cannot be deleted");
+        }
+      }
+
+      await tx.adminLog.create({
+        data: {
+          actorId,
+          action: "USER_DELETE",
+          targetType: "User",
+          targetId: targetUserId,
+          metadata: {
+            email: targetUser.email,
+            role: targetUser.role
+          } satisfies Prisma.InputJsonValue
+        }
+      });
+
+      await tx.user.delete({
+        where: { id: targetUserId }
+      });
+
+      return { userId: targetUserId };
     });
   }
 
@@ -371,6 +519,23 @@ export class PointsService {
     }
 
     return normalized;
+  }
+
+  private adminUserInclude() {
+    return {
+      balance: true,
+      generationTasks: {
+        select: { createdAt: true },
+        orderBy: { createdAt: "desc" as const },
+        take: 1
+      },
+      _count: {
+        select: {
+          generationTasks: true,
+          assets: true
+        }
+      }
+    };
   }
 
   private toBalanceSummary(balance: UserBalance): PointBalanceSummary {

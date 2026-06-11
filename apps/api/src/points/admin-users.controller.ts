@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Post, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { AuthService } from "../auth/auth.service.js";
 import { PointsService } from "./points.service.js";
@@ -29,5 +29,27 @@ export class AdminUsersController {
       amount: Number(input.amount),
       reason: input.reason
     });
+  }
+
+  @Post(":userId/points/deduct")
+  async deductPoints(
+    @Req() request: Request,
+    @Param("userId") userId: string,
+    @Body() body: unknown
+  ) {
+    const admin = await this.authService.requireAdmin(request);
+    const input = body as { amount?: number; reason?: string };
+
+    return this.pointsService.deductPoints(admin.id, userId, {
+      amount: Number(input.amount),
+      reason: input.reason
+    });
+  }
+
+  @Delete(":userId")
+  async deleteUser(@Req() request: Request, @Param("userId") userId: string) {
+    const admin = await this.authService.requireAdmin(request);
+
+    return this.pointsService.deleteUser(admin.id, userId);
   }
 }

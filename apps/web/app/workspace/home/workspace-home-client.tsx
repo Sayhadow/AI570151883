@@ -515,6 +515,57 @@ export function WorkspaceHomeClient() {
     }
   }
 
+  async function deductPoints(event: FormEvent<HTMLFormElement>, userId: string) {
+    event.preventDefault();
+    setMessage(null);
+    setSubmittingUserId(userId);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const result = await apiRequest<AdminPointGrantResponse>(`/api/admin/users/${userId}/points/deduct`, {
+        method: "POST",
+        body: JSON.stringify({
+          amount: Number(formData.get("amount")),
+          reason: formData.get("reason") || undefined
+        })
+      });
+
+      setAdminUsers((currentUsers) => currentUsers.map((adminUser) => (adminUser.id === result.user.id ? result.user : adminUser)));
+      form.reset();
+      setMessage(`已从 ${result.user.email} 扣除 ${Math.abs(result.transaction.amount)} 点。`);
+      await loadWorkspace({ quiet: true });
+    } catch (caughtError) {
+      setMessage(caughtError instanceof Error ? caughtError.message : "扣除积分失败");
+    } finally {
+      setSubmittingUserId(null);
+    }
+  }
+
+  async function deleteAdminUser(userId: string, email: string) {
+    if (!window.confirm(`确定要删除用户 ${email} 吗？此操作会删除该用户的登录、任务和点数记录。`)) {
+      return;
+    }
+
+    setMessage(null);
+    setSubmittingUserId(userId);
+
+    try {
+      await apiRequest(`/api/admin/users/${userId}`, {
+        method: "DELETE"
+      });
+
+      setAdminUsers((currentUsers) => currentUsers.filter((adminUser) => adminUser.id !== userId));
+      setMessage(`已删除用户 ${email}。`);
+      await loadWorkspace({ quiet: true });
+    } catch (caughtError) {
+      setMessage(caughtError instanceof Error ? caughtError.message : "删除用户失败");
+    } finally {
+      setSubmittingUserId(null);
+    }
+  }
+
   async function createInviteCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
@@ -827,7 +878,13 @@ export function WorkspaceHomeClient() {
           ) : null}
           {activeView === "points" ? <PointsView balance={balance} transactions={transactions} /> : null}
           {activeView === "admin-users" && isAdmin ? (
-            <AdminUsersView users={adminUsers} submittingUserId={submittingUserId} grantPoints={grantPoints} />
+            <AdminUsersView
+              users={adminUsers}
+              submittingUserId={submittingUserId}
+              grantPoints={grantPoints}
+              deductPoints={deductPoints}
+              deleteUser={deleteAdminUser}
+            />
           ) : null}
           {activeView === "admin-tasks" && isAdmin ? (
             <AdminTasksView
@@ -2216,17 +2273,21 @@ function PointsView({ balance, transactions }: { balance: PointBalanceSummary; t
 function AdminUsersView({
   users,
   submittingUserId,
-  grantPoints
+  grantPoints,
+  deductPoints,
+  deleteUser
 }: {
   users: AdminUserSummary[];
   submittingUserId: string | null;
   grantPoints: (event: FormEvent<HTMLFormElement>, userId: string) => Promise<void>;
+  deductPoints: (event: FormEvent<HTMLFormElement>, userId: string) => Promise<void>;
+  deleteUser: (userId: string, email: string) => Promise<void>;
 }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold">用户充值</h2>
+      <h2 className="text-lg font-semibold">用户管理</h2>
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[1120px] border-collapse text-sm">
+        <table className="w-full min-w-[1320px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">
               <th className="py-3 pr-4 font-medium">用户</th>
@@ -2234,7 +2295,9 @@ function AdminUsersView({
               <th className="py-3 pr-4 font-medium">可用</th>
               <th className="py-3 pr-4 font-medium">预扣</th>
               <th className="py-3 pr-4 font-medium">任务/资产</th>
-              <th className="py-3 font-medium">充值</th>
+              <th className="py-3 pr-4 font-medium">充值</th>
+              <th className="py-3 pr-4 font-medium">扣除积分</th>
+              <th className="py-3 font-medium">删除</th>
             </tr>
           </thead>
           <tbody>
@@ -2250,7 +2313,7 @@ function AdminUsersView({
                 <td className="py-3 pr-4">
                   {adminUser.generationTaskCount}/{adminUser.resultAssetCount}
                 </td>
-                <td className="py-3">
+                <td className="py-3 pr-4">
                   <form className="flex flex-wrap gap-2" onSubmit={(event) => grantPoints(event, adminUser.id)}>
                     <input className="h-9 w-28 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-950" min="1" max="1000000" name="amount" placeholder="点数" required={true} type="number" />
                     <input className="h-9 w-52 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-950" maxLength={200} name="reason" placeholder="备注" />
@@ -2263,6 +2326,31 @@ function AdminUsersView({
                       充值
                     </button>
                   </form>
+                </td>
+                <td className="py-3 pr-4">
+                  <form className="flex flex-wrap gap-2" onSubmit={(event) => deductPoints(event, adminUser.id)}>
+                    <input className="h-9 w-28 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-950" min="1" max="1000000" name="amount" placeholder="点数" required={true} type="number" />
+                    <input className="h-9 w-52 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-950" maxLength={200} name="reason" placeholder="备注" />
+                    <button
+                      className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                      disabled={submittingUserId === adminUser.id}
+                      type="submit"
+                    >
+                      <Coins className="h-4 w-4" aria-hidden={true} />
+                      扣除
+                    </button>
+                  </form>
+                </td>
+                <td className="py-3">
+                  <button
+                    className="inline-flex h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-semibold text-red-600 disabled:opacity-60"
+                    disabled={submittingUserId === adminUser.id}
+                    type="button"
+                    onClick={() => void deleteUser(adminUser.id, adminUser.email)}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden={true} />
+                    删除
+                  </button>
                 </td>
               </tr>
             ))}

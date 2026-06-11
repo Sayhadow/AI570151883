@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Coins, DatabaseZap, RefreshCw } from "lucide-react";
+import { ArrowLeft, Coins, DatabaseZap, RefreshCw, Trash2 } from "lucide-react";
 import type { AdminPointGrantResponse, AdminUserSummary } from "@ai-image/shared";
 import { apiRequest } from "../../../lib/api";
 
@@ -53,6 +53,55 @@ export function AdminUsersClient() {
     }
   }
 
+  async function deductPoints(event: FormEvent<HTMLFormElement>, userId: string) {
+    event.preventDefault();
+    setMessage(null);
+    setSubmittingUserId(userId);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const result = await apiRequest<AdminPointGrantResponse>(`/api/admin/users/${userId}/points/deduct`, {
+        method: "POST",
+        body: JSON.stringify({
+          amount: Number(formData.get("amount")),
+          reason: formData.get("reason") || undefined
+        })
+      });
+
+      setUsers((currentUsers) => currentUsers.map((user) => (user.id === result.user.id ? result.user : user)));
+      form.reset();
+      setMessage(`已从 ${result.user.email} 扣除 ${Math.abs(result.transaction.amount)} 点`);
+    } catch (caughtError) {
+      setMessage(caughtError instanceof Error ? caughtError.message : "扣除积分失败");
+    } finally {
+      setSubmittingUserId(null);
+    }
+  }
+
+  async function deleteUser(userId: string, email: string) {
+    if (!window.confirm(`确定要删除用户 ${email} 吗？此操作会删除该用户的登录、任务和点数记录。`)) {
+      return;
+    }
+
+    setMessage(null);
+    setSubmittingUserId(userId);
+
+    try {
+      await apiRequest(`/api/admin/users/${userId}`, {
+        method: "DELETE"
+      });
+
+      setUsers((currentUsers) => currentUsers.filter((user) => user.id !== userId));
+      setMessage(`已删除用户 ${email}`);
+    } catch (caughtError) {
+      setMessage(caughtError instanceof Error ? caughtError.message : "删除用户失败");
+    } finally {
+      setSubmittingUserId(null);
+    }
+  }
+
   useEffect(() => {
     void loadUsers();
   }, []);
@@ -93,7 +142,7 @@ export function AdminUsersClient() {
           {message ? <p className="mt-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">{message}</p> : null}
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[1120px] border-collapse text-sm">
+            <table className="w-full min-w-[1420px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="py-3 pr-4 font-medium">用户</th>
@@ -103,7 +152,9 @@ export function AdminUsersClient() {
                   <th className="py-3 pr-4 font-medium">预扣</th>
                   <th className="py-3 pr-4 font-medium">任务/资产</th>
                   <th className="py-3 pr-4 font-medium">最近任务</th>
-                  <th className="py-3 font-medium">充值</th>
+                  <th className="py-3 pr-4 font-medium">充值</th>
+                  <th className="py-3 pr-4 font-medium">扣除积分</th>
+                  <th className="py-3 font-medium">删除</th>
                 </tr>
               </thead>
               <tbody>
@@ -123,7 +174,7 @@ export function AdminUsersClient() {
                     <td className="py-3 pr-4 text-muted-foreground">
                       {user.lastTaskAt ? new Date(user.lastTaskAt).toLocaleString() : "-"}
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 pr-4">
                       <form className="flex flex-wrap gap-2" onSubmit={(event) => grantPoints(event, user.id)}>
                         <input
                           className="h-9 w-28 rounded-md border border-border px-3 outline-none focus:border-primary"
@@ -149,6 +200,44 @@ export function AdminUsersClient() {
                           充值
                         </button>
                       </form>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <form className="flex flex-wrap gap-2" onSubmit={(event) => deductPoints(event, user.id)}>
+                        <input
+                          className="h-9 w-28 rounded-md border border-border px-3 outline-none focus:border-primary"
+                          min="1"
+                          max="1000000"
+                          name="amount"
+                          placeholder="点数"
+                          required={true}
+                          type="number"
+                        />
+                        <input
+                          className="h-9 w-52 rounded-md border border-border px-3 outline-none focus:border-primary"
+                          maxLength={200}
+                          name="reason"
+                          placeholder="备注"
+                        />
+                        <button
+                          className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold disabled:opacity-60"
+                          disabled={submittingUserId === user.id}
+                          type="submit"
+                        >
+                          <Coins className="h-4 w-4" aria-hidden="true" />
+                          扣除
+                        </button>
+                      </form>
+                    </td>
+                    <td className="py-3">
+                      <button
+                        className="inline-flex h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-semibold text-red-600 disabled:opacity-60"
+                        disabled={submittingUserId === user.id}
+                        type="button"
+                        onClick={() => void deleteUser(user.id, user.email)}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        删除
+                      </button>
                     </td>
                   </tr>
                 ))}
