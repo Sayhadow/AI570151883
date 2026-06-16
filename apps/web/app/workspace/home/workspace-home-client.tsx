@@ -1253,23 +1253,20 @@ function HomeView({
                   {resolution.toUpperCase()} 高清
                 </button>
               ))}
-              <div className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-2 text-sm font-semibold text-white">
-                <span className="pl-1 text-white/75">尺寸</span>
-                {aspectRatios.map((aspectRatio) => (
-                  <button
-                    className={`h-7 rounded-full px-2.5 text-xs font-semibold transition ${
-                      selectedAspectRatio === aspectRatio.value
-                        ? "bg-sky-300 text-slate-950"
-                        : "bg-white/10 text-white hover:bg-white/20"
-                    }`}
-                    key={aspectRatio.value}
-                    type="button"
-                    onClick={() => setSelectedAspectRatio(aspectRatio.value)}
-                  >
-                    {aspectRatio.label}
-                  </button>
-                ))}
-              </div>
+              <label className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white">
+                <span className="text-white/75">尺寸</span>
+                <select
+                  className="h-7 min-w-24 rounded-full border border-white/10 bg-slate-950/70 px-3 text-xs font-semibold text-white outline-none transition focus:border-sky-300"
+                  value={selectedAspectRatio}
+                  onChange={(event) => setSelectedAspectRatio(event.currentTarget.value as AspectRatio)}
+                >
+                  {aspectRatios.map((aspectRatio) => (
+                    <option key={aspectRatio.value} value={aspectRatio.value}>
+                      {aspectRatio.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-2.5 py-2 text-sm font-semibold text-white">
                 <span className="pl-2">生成</span>
                 <button
@@ -2061,25 +2058,20 @@ function CreateView({
             </div>
           </div>
 
-          <div className="mt-4">
-            <div className="text-sm font-medium">尺寸</div>
-            <div className="mt-2 grid grid-cols-4 gap-2">
+          <label className="mt-4 grid gap-2 text-sm font-medium">
+            <span>尺寸</span>
+            <select
+              className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-slate-950"
+              value={selectedAspectRatio}
+              onChange={(event) => setSelectedAspectRatio(event.currentTarget.value as AspectRatio)}
+            >
               {aspectRatios.map((aspectRatio) => (
-                <button
-                  className={`h-9 rounded-md border text-xs font-semibold transition ${
-                    selectedAspectRatio === aspectRatio.value
-                      ? "border-slate-950 bg-slate-950 text-white"
-                      : "border-slate-200 bg-white hover:bg-slate-50"
-                  }`}
-                  key={aspectRatio.value}
-                  type="button"
-                  onClick={() => setSelectedAspectRatio(aspectRatio.value)}
-                >
+                <option key={aspectRatio.value} value={aspectRatio.value}>
                   {aspectRatio.label}
-                </button>
+                </option>
               ))}
-            </div>
-          </div>
+            </select>
+          </label>
 
           {generationPreset === "custom" ? (
             <label className="mt-4 grid gap-2 text-sm font-medium">
