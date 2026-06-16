@@ -1043,7 +1043,7 @@ function AspectRatioSelect({
         <div
           className={`absolute left-0 top-full z-[9999] mt-2 rounded-lg border p-2 shadow-2xl ${
             isDark
-              ? "w-52 border-white/10 bg-slate-950 text-white shadow-black/50"
+              ? "w-52 border-white/10 bg-[#070b18] text-white shadow-black/60"
               : "w-full min-w-56 border-slate-300 bg-white text-slate-950 shadow-slate-900/25"
           }`}
           role="listbox"
@@ -1057,11 +1057,11 @@ function AspectRatioSelect({
                   className={`flex h-9 items-center justify-between rounded-md px-3 text-sm font-semibold transition ${
                     selected
                       ? isDark
-                        ? "bg-sky-300 text-slate-950"
-                        : "bg-sky-600 text-white"
+                        ? "bg-fuchsia-500 !text-white"
+                        : "bg-sky-600 !text-white"
                       : isDark
-                        ? "text-white/85 hover:bg-white/10 hover:text-white"
-                        : "text-slate-950 hover:bg-slate-100"
+                        ? "bg-[#111827] !text-white hover:bg-[#1f2937] hover:!text-white"
+                        : "bg-white !text-slate-950 hover:bg-sky-50 hover:!text-slate-950"
                   }`}
                   key={aspectRatio.value}
                   role="option"
@@ -1227,7 +1227,7 @@ function HomeView({
   return (
     <div className="space-y-10">
       <section
-        className="relative rounded-[2rem] px-5 py-12 text-center md:px-12"
+        className="relative z-50 rounded-[2rem] px-5 py-12 text-center md:px-12"
         onMouseLeave={() => setHeroSparkles([])}
         onMouseMove={addHeroSparkle}
       >
@@ -1247,7 +1247,7 @@ function HomeView({
             />
           ))}
         </div>
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative z-50 mx-auto max-w-6xl">
           <h1 className="pointer-events-none select-none cursor-default text-4xl font-semibold leading-tight tracking-normal md:text-5xl 2xl:text-6xl">
             用 Sayhadow 轻松做爆款
             <span className="sayhadow-hero-word text-sky-400" key={heroTitleWord}>
@@ -1259,7 +1259,7 @@ function HomeView({
           </p>
 
           <form
-            className="sayhadow-home-composer mx-auto mt-9 grid w-full max-w-5xl rounded-[1.75rem] border border-sky-400/40 bg-white/[0.07] p-4 text-left shadow-[0_0_80px_rgba(56,189,248,0.15)] backdrop-blur transition focus-within:border-sky-300 md:p-5"
+            className="sayhadow-home-composer relative z-50 mx-auto mt-9 grid w-full max-w-5xl rounded-[1.75rem] border border-sky-400/40 bg-white/[0.07] p-4 text-left shadow-[0_0_80px_rgba(56,189,248,0.15)] backdrop-blur transition focus-within:border-sky-300 md:p-5"
             onSubmit={createTask}
           >
             <div className="flex min-h-20 items-start gap-4">
@@ -1392,7 +1392,7 @@ function HomeView({
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+      <section className="relative z-0 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
         {generationModeCardConfigs.map((card) => (
           <HomeModeCard
             description={card.description}
