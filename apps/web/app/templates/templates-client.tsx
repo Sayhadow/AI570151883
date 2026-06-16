@@ -265,7 +265,7 @@ export function TemplatesClient() {
                 <label className="grid gap-2 text-sm font-medium">
                   <span>尺寸</span>
                   <select
-                    className="h-10 rounded-md border border-border px-3 outline-none focus:border-primary"
+                    className="h-10 rounded-md border border-slate-400 bg-white px-3 text-slate-950 outline-none focus:border-primary"
                     defaultValue={readAspectRatio(selectedTemplate.defaultParams)}
                     name="aspectRatio"
                   >

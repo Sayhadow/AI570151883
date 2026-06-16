@@ -1023,15 +1023,15 @@ function AspectRatioSelect({
   }, [isOpen]);
 
   return (
-    <div className={`relative ${className}`} ref={rootRef}>
-      <span className={isDark ? "text-sm font-semibold text-white/75" : "text-sm font-medium text-slate-700"}>{label}</span>
+    <div className={`relative ${isOpen ? "z-[9998]" : "z-10"} ${className}`} ref={rootRef}>
+      <span className={isDark ? "text-xs font-semibold text-white/75" : "text-sm font-semibold text-slate-800"}>{label}</span>
       <button
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className={`inline-flex h-10 min-w-32 items-center justify-between gap-3 rounded-md border px-3 text-sm font-semibold shadow-sm outline-none transition ${
+        className={`inline-flex items-center justify-between rounded-md border font-semibold shadow-sm outline-none transition ${
           isDark
-            ? "border-white/15 bg-white/10 text-white hover:bg-white/15 focus:border-sky-300"
-            : "border-slate-300 bg-white text-slate-950 hover:border-slate-400 hover:bg-slate-50 focus:border-slate-950"
+            ? "h-8 w-20 gap-1 border-white/15 bg-white/10 px-2 text-xs text-white hover:bg-white/15 focus:border-sky-300"
+            : "h-10 w-full gap-3 border-slate-400 bg-white px-3 text-sm text-slate-950 hover:border-slate-700 hover:bg-slate-50 focus:border-sky-600"
         }`}
         type="button"
         onClick={() => setIsOpen((current) => !current)}
@@ -1041,8 +1041,10 @@ function AspectRatioSelect({
       </button>
       {isOpen ? (
         <div
-          className={`absolute left-0 top-full z-40 mt-2 w-72 rounded-lg border p-2 shadow-2xl ${
-            isDark ? "border-white/10 bg-slate-950 text-white shadow-black/40" : "border-slate-200 bg-white text-slate-950 shadow-slate-900/15"
+          className={`absolute left-0 top-full z-[9999] mt-2 rounded-lg border p-2 shadow-2xl ${
+            isDark
+              ? "w-52 border-white/10 bg-slate-950 text-white shadow-black/50"
+              : "w-full min-w-56 border-slate-300 bg-white text-slate-950 shadow-slate-900/25"
           }`}
           role="listbox"
         >
@@ -1056,10 +1058,10 @@ function AspectRatioSelect({
                     selected
                       ? isDark
                         ? "bg-sky-300 text-slate-950"
-                        : "bg-slate-950 text-white"
+                        : "bg-sky-600 text-white"
                       : isDark
                         ? "text-white/85 hover:bg-white/10 hover:text-white"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+                        : "text-slate-950 hover:bg-slate-100"
                   }`}
                   key={aspectRatio.value}
                   role="option"
@@ -1349,7 +1351,7 @@ function HomeView({
                 </button>
               ))}
               <AspectRatioSelect
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-1.5"
                 value={selectedAspectRatio}
                 variant="dark"
                 onChange={setSelectedAspectRatio}
@@ -2732,7 +2734,7 @@ function AdminTemplatesView({
           <label className="grid gap-2 text-sm font-medium">
             <span>尺寸</span>
             <select
-              className="h-10 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-950"
+              className="h-10 rounded-md border border-slate-400 bg-white px-3 text-slate-950 outline-none focus:border-slate-950"
               defaultValue={defaults?.aspectRatio ?? "1:1"}
               name="aspectRatio"
             >
