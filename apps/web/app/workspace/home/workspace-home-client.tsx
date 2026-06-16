@@ -6,6 +6,8 @@ import {
   Activity,
   BadgePlus,
   CheckSquare,
+  Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Coins,
@@ -76,6 +78,7 @@ type AspectRatio =
   | "1:3"
   | "21:9"
   | "9:21";
+type AspectRatioSelectVariant = "dark" | "light";
 type GenerationPreset = "custom" | "ecommerce_suite" | "ecommerce_main" | "ecommerce_scene";
 type SuitePlanningMode = "manual" | "auto";
 type TemplateCategory = "all" | "suite" | "main" | "scene" | "detail" | "promotion";
@@ -986,6 +989,98 @@ function ImagePreviewModal({ preview, onClose }: { preview: ImagePreview; onClos
   );
 }
 
+function AspectRatioSelect({
+  className = "",
+  label = "尺寸",
+  onChange,
+  value,
+  variant
+}: {
+  className?: string;
+  label?: string;
+  onChange: (aspectRatio: AspectRatio) => void;
+  value: AspectRatio;
+  variant: AspectRatioSelectVariant;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selectedLabel = getAspectRatioLabel(value);
+  const isDark = variant === "dark";
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [isOpen]);
+
+  return (
+    <div className={`relative ${className}`} ref={rootRef}>
+      <span className={isDark ? "text-sm font-semibold text-white/75" : "text-sm font-medium text-slate-700"}>{label}</span>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        className={`inline-flex h-10 min-w-32 items-center justify-between gap-3 rounded-md border px-3 text-sm font-semibold shadow-sm outline-none transition ${
+          isDark
+            ? "border-white/15 bg-white/10 text-white hover:bg-white/15 focus:border-sky-300"
+            : "border-slate-300 bg-white text-slate-950 hover:border-slate-400 hover:bg-slate-50 focus:border-slate-950"
+        }`}
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>{selectedLabel}</span>
+        <ChevronDown aria-hidden className={`h-4 w-4 transition ${isOpen ? "rotate-180" : ""} ${isDark ? "text-white/70" : "text-slate-500"}`} />
+      </button>
+      {isOpen ? (
+        <div
+          className={`absolute left-0 top-full z-40 mt-2 w-72 rounded-lg border p-2 shadow-2xl ${
+            isDark ? "border-white/10 bg-slate-950 text-white shadow-black/40" : "border-slate-200 bg-white text-slate-950 shadow-slate-900/15"
+          }`}
+          role="listbox"
+        >
+          <div className="grid max-h-72 grid-cols-2 gap-1 overflow-y-auto">
+            {aspectRatios.map((aspectRatio) => {
+              const selected = aspectRatio.value === value;
+              return (
+                <button
+                  aria-selected={selected}
+                  className={`flex h-9 items-center justify-between rounded-md px-3 text-sm font-semibold transition ${
+                    selected
+                      ? isDark
+                        ? "bg-sky-300 text-slate-950"
+                        : "bg-slate-950 text-white"
+                      : isDark
+                        ? "text-white/85 hover:bg-white/10 hover:text-white"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+                  }`}
+                  key={aspectRatio.value}
+                  role="option"
+                  type="button"
+                  onClick={() => {
+                    onChange(aspectRatio.value);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span>{aspectRatio.label}</span>
+                  {selected ? <Check aria-hidden className="h-4 w-4" /> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function HomeView({
   balance,
   createTask,
@@ -1253,20 +1348,12 @@ function HomeView({
                   {resolution.toUpperCase()} 高清
                 </button>
               ))}
-              <label className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white">
-                <span className="text-white/75">尺寸</span>
-                <select
-                  className="h-7 min-w-24 rounded-full border border-white/10 bg-slate-950/70 px-3 text-xs font-semibold text-white outline-none transition focus:border-sky-300"
-                  value={selectedAspectRatio}
-                  onChange={(event) => setSelectedAspectRatio(event.currentTarget.value as AspectRatio)}
-                >
-                  {aspectRatios.map((aspectRatio) => (
-                    <option key={aspectRatio.value} value={aspectRatio.value}>
-                      {aspectRatio.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <AspectRatioSelect
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"
+                value={selectedAspectRatio}
+                variant="dark"
+                onChange={setSelectedAspectRatio}
+              />
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-2.5 py-2 text-sm font-semibold text-white">
                 <span className="pl-2">生成</span>
                 <button
@@ -2058,20 +2145,7 @@ function CreateView({
             </div>
           </div>
 
-          <label className="mt-4 grid gap-2 text-sm font-medium">
-            <span>尺寸</span>
-            <select
-              className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-slate-950"
-              value={selectedAspectRatio}
-              onChange={(event) => setSelectedAspectRatio(event.currentTarget.value as AspectRatio)}
-            >
-              {aspectRatios.map((aspectRatio) => (
-                <option key={aspectRatio.value} value={aspectRatio.value}>
-                  {aspectRatio.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <AspectRatioSelect className="mt-4 grid gap-2" value={selectedAspectRatio} variant="light" onChange={setSelectedAspectRatio} />
 
           {generationPreset === "custom" ? (
             <label className="mt-4 grid gap-2 text-sm font-medium">
