@@ -1044,7 +1044,7 @@ function AspectRatioSelect({
           className={`absolute left-0 top-full z-[9999] mt-2 rounded-lg border p-2 shadow-2xl ${
             isDark
               ? "w-52 border-white/10 bg-[#070b18] text-white shadow-black/60"
-              : "w-full min-w-56 border-slate-300 bg-white text-slate-950 shadow-slate-900/25"
+              : "w-full min-w-56 border-white/10 bg-[#070b18] text-white shadow-black/60"
           }`}
           role="listbox"
         >
@@ -1055,13 +1055,7 @@ function AspectRatioSelect({
                 <button
                   aria-selected={selected}
                   className={`flex h-9 items-center justify-between rounded-md px-3 text-sm font-semibold transition ${
-                    selected
-                      ? isDark
-                        ? "bg-fuchsia-500 !text-white"
-                        : "bg-sky-600 !text-white"
-                      : isDark
-                        ? "bg-[#111827] !text-white hover:bg-[#1f2937] hover:!text-white"
-                        : "bg-white !text-slate-950 hover:bg-sky-50 hover:!text-slate-950"
+                    selected ? "bg-sky-300 !text-white" : "bg-[#111827] !text-white hover:bg-[#1f2937] hover:!text-white"
                   }`}
                   key={aspectRatio.value}
                   role="option"
