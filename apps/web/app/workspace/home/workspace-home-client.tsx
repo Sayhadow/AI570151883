@@ -58,7 +58,24 @@ type WorkspaceView =
   | "admin-templates"
   | "admin-invites"
   | "settings";
-type Resolution = "1k" | "2k";
+type Resolution = "1k" | "2k" | "4k";
+type AspectRatio =
+  | "auto"
+  | "1:1"
+  | "3:2"
+  | "2:3"
+  | "4:3"
+  | "3:4"
+  | "5:4"
+  | "4:5"
+  | "16:9"
+  | "9:16"
+  | "2:1"
+  | "1:2"
+  | "3:1"
+  | "1:3"
+  | "21:9"
+  | "9:21";
 type GenerationPreset = "custom" | "ecommerce_suite" | "ecommerce_main" | "ecommerce_scene";
 type SuitePlanningMode = "manual" | "auto";
 type TemplateCategory = "all" | "suite" | "main" | "scene" | "detail" | "promotion";
@@ -81,7 +98,25 @@ type HeroSparkle = {
   rotation: number;
 };
 
-const resolutions: Resolution[] = ["1k", "2k"];
+const resolutions: Resolution[] = ["1k", "2k", "4k"];
+const aspectRatios: Array<{ label: string; value: AspectRatio }> = [
+  { label: "Auto", value: "auto" },
+  { label: "1:1", value: "1:1" },
+  { label: "3:2", value: "3:2" },
+  { label: "2:3", value: "2:3" },
+  { label: "4:3", value: "4:3" },
+  { label: "3:4", value: "3:4" },
+  { label: "5:4", value: "5:4" },
+  { label: "4:5", value: "4:5" },
+  { label: "16:9", value: "16:9" },
+  { label: "9:16", value: "9:16" },
+  { label: "2:1", value: "2:1" },
+  { label: "1:2", value: "1:2" },
+  { label: "3:1", value: "3:1" },
+  { label: "1:3", value: "1:3" },
+  { label: "21:9", value: "21:9" },
+  { label: "9:21", value: "9:21" }
+];
 const taskStatuses: Array<GenerationStatus | "all"> = ["all", "queued", "processing", "succeeded", "refunded", "failed"];
 const templateCategories: Array<{ id: TemplateCategory; label: string }> = [
   { id: "all", label: "全部" },
@@ -190,6 +225,7 @@ export function WorkspaceHomeClient() {
   const [isPlanningSuite, setIsPlanningSuite] = useState(false);
   const [selectedMainStyleId, setSelectedMainStyleId] = useState<EcommerceMainStyleId>(defaultEcommerceMainStyleId);
   const [selectedResolution, setSelectedResolution] = useState<Resolution>("1k");
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>("1:1");
   const [imageCount, setImageCount] = useState(1);
   const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
   const [appliedTemplateId, setAppliedTemplateId] = useState<string | null>(null);
@@ -379,7 +415,7 @@ export function WorkspaceHomeClient() {
             extraPrompt: promptText,
             resolution: selectedResolution,
             imageCount,
-            aspectRatio: "1:1",
+            aspectRatio: selectedAspectRatio,
             suitePlanningMode: generationPreset === "ecommerce_suite" ? suitePlanningMode : undefined,
             imagePrompts: generationPreset === "ecommerce_suite" ? suiteImagePrompts : undefined,
             referenceFileNames: referenceImages.map((image) => image.fileName),
@@ -400,6 +436,7 @@ export function WorkspaceHomeClient() {
       setAppliedTemplateId(null);
       setImageCount(1);
       setSelectedResolution("1k");
+      setSelectedAspectRatio("1:1");
       setMessage("任务已入队，系统会自动刷新状态。");
       await loadWorkspace({ quiet: true });
     } catch (caughtError) {
@@ -452,6 +489,7 @@ export function WorkspaceHomeClient() {
     setSuiteImagePrompts(readSuiteImagePrompts(task.params));
     setSelectedMainStyleId(readEcommerceMainStyleId(task.params));
     setSelectedResolution(readResolution(task.params));
+    setSelectedAspectRatio(readAspectRatio(task.params));
     setImageCount(readImageCount(task.params));
     setAppliedTemplateId(task.templateId);
     setActiveView("create");
@@ -474,6 +512,7 @@ export function WorkspaceHomeClient() {
     setGenerationPreset(recipe.preset);
     setImageCount(recipe.imageCount);
     setSelectedResolution(recipe.resolution);
+    setSelectedAspectRatio(recipe.aspectRatio);
     setSelectedMainStyleId(recipe.mainStyleId);
     setPromptText(recipe.extraPrompt);
     setProductName("");
@@ -613,6 +652,7 @@ export function WorkspaceHomeClient() {
         mainStyleId: formData.get("mainStyleId"),
         imageCount: Number(formData.get("imageCount") || 3),
         resolution: formData.get("resolution"),
+        aspectRatio: formData.get("aspectRatio"),
         extraPrompt: formData.get("extraPrompt") || "",
         previewUrl: formData.get("previewUrl") || "",
         tags
@@ -819,6 +859,7 @@ export function WorkspaceHomeClient() {
               productName={productName}
               referenceImages={referenceImages}
               resultTasks={resultTasks}
+              selectedAspectRatio={selectedAspectRatio}
               selectedResolution={selectedResolution}
               templates={templates}
               addReferenceImages={addReferenceImages}
@@ -828,6 +869,7 @@ export function WorkspaceHomeClient() {
               setImageCount={setImageCount}
               setProductName={setProductName}
               setPromptText={setPromptText}
+              setSelectedAspectRatio={setSelectedAspectRatio}
               setSelectedResolution={setSelectedResolution}
               useTemplate={useTemplate}
               refillFromTask={refillFromTask}
@@ -847,6 +889,7 @@ export function WorkspaceHomeClient() {
               referenceImages={referenceImages}
               recentAssets={assets.slice(0, 8)}
               recentTasks={tasks.slice(0, 8)}
+              selectedAspectRatio={selectedAspectRatio}
               selectedResolution={selectedResolution}
               selectedMainStyleId={selectedMainStyleId}
               suitePlanningMode={suitePlanningMode}
@@ -860,6 +903,7 @@ export function WorkspaceHomeClient() {
               setSuitePlanningMode={setSuitePlanningMode}
               setPromptText={setPromptText}
               setProductName={setProductName}
+              setSelectedAspectRatio={setSelectedAspectRatio}
               setSelectedResolution={setSelectedResolution}
               updateSuiteImagePrompt={updateSuiteImagePrompt}
               planEcommerceSuite={planEcommerceSuite}
@@ -953,6 +997,7 @@ function HomeView({
   productName,
   referenceImages,
   resultTasks,
+  selectedAspectRatio,
   selectedResolution,
   templates,
   addReferenceImages,
@@ -962,6 +1007,7 @@ function HomeView({
   setImageCount,
   setProductName,
   setPromptText,
+  setSelectedAspectRatio,
   setSelectedResolution,
   useTemplate,
   refillFromTask,
@@ -977,6 +1023,7 @@ function HomeView({
   productName: string;
   referenceImages: ReferenceImage[];
   resultTasks: GenerationTaskSummary[];
+  selectedAspectRatio: AspectRatio;
   selectedResolution: Resolution;
   templates: TemplateSummary[];
   addReferenceImages: (files: FileList | null) => Promise<void>;
@@ -986,6 +1033,7 @@ function HomeView({
   setImageCount: (count: number) => void;
   setProductName: (productName: string) => void;
   setPromptText: (prompt: string) => void;
+  setSelectedAspectRatio: (aspectRatio: AspectRatio) => void;
   setSelectedResolution: (resolution: Resolution) => void;
   useTemplate: (template: TemplateSummary) => void;
   refillFromTask: (task: GenerationTaskSummary) => void;
@@ -1205,6 +1253,23 @@ function HomeView({
                   {resolution.toUpperCase()} 高清
                 </button>
               ))}
+              <div className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-2 text-sm font-semibold text-white">
+                <span className="pl-1 text-white/75">尺寸</span>
+                {aspectRatios.map((aspectRatio) => (
+                  <button
+                    className={`h-7 rounded-full px-2.5 text-xs font-semibold transition ${
+                      selectedAspectRatio === aspectRatio.value
+                        ? "bg-sky-300 text-slate-950"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                    key={aspectRatio.value}
+                    type="button"
+                    onClick={() => setSelectedAspectRatio(aspectRatio.value)}
+                  >
+                    {aspectRatio.label}
+                  </button>
+                ))}
+              </div>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-2.5 py-2 text-sm font-semibold text-white">
                 <span className="pl-2">生成</span>
                 <button
@@ -1607,6 +1672,7 @@ function TemplateDetails({
       <dl className="mt-5 grid grid-cols-2 gap-3">
         <TemplateDetail label="默认生成" value={`${recipe.imageCount} 张`} />
         <TemplateDetail label="默认清晰度" value={recipe.resolution.toUpperCase()} />
+        <TemplateDetail label="默认尺寸" value={getAspectRatioLabel(recipe.aspectRatio)} />
         <TemplateDetail label="生成模式" value={getPresetMeta(recipe.preset).title.replace("模式", "")} />
         <TemplateDetail label="预计消耗" value={`${getResolutionPointCost(recipe.resolution) * recipe.imageCount} 点`} />
       </dl>
@@ -1654,6 +1720,7 @@ function CreateView({
   referenceImages,
   recentAssets,
   recentTasks,
+  selectedAspectRatio,
   selectedMainStyleId,
   selectedResolution,
   suitePlanningMode,
@@ -1667,6 +1734,7 @@ function CreateView({
   setSuitePlanningMode,
   setPromptText,
   setProductName,
+  setSelectedAspectRatio,
   setSelectedResolution,
   updateSuiteImagePrompt,
   planEcommerceSuite,
@@ -1689,6 +1757,7 @@ function CreateView({
   referenceImages: ReferenceImage[];
   recentAssets: ResultAssetSummary[];
   recentTasks: GenerationTaskSummary[];
+  selectedAspectRatio: AspectRatio;
   selectedMainStyleId: EcommerceMainStyleId;
   selectedResolution: Resolution;
   suitePlanningMode: SuitePlanningMode;
@@ -1702,6 +1771,7 @@ function CreateView({
   setSuitePlanningMode: (mode: SuitePlanningMode) => void;
   setPromptText: (prompt: string) => void;
   setProductName: (productName: string) => void;
+  setSelectedAspectRatio: (aspectRatio: AspectRatio) => void;
   setSelectedResolution: (resolution: Resolution) => void;
   updateSuiteImagePrompt: (index: number, prompt: string) => void;
   planEcommerceSuite: () => Promise<void>;
@@ -1975,7 +2045,7 @@ function CreateView({
           <h2 className="text-lg font-semibold">生成参数</h2>
           <div className="mt-4">
             <div className="text-sm font-medium">分辨率</div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-3 gap-2">
               {resolutions.map((resolution) => (
                 <button
                   className={`h-10 rounded-md border text-sm font-semibold transition ${
@@ -1986,6 +2056,26 @@ function CreateView({
                   onClick={() => setSelectedResolution(resolution)}
                 >
                   {resolution.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-sm font-medium">尺寸</div>
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {aspectRatios.map((aspectRatio) => (
+                <button
+                  className={`h-9 rounded-md border text-xs font-semibold transition ${
+                    selectedAspectRatio === aspectRatio.value
+                      ? "border-slate-950 bg-slate-950 text-white"
+                      : "border-slate-200 bg-white hover:bg-slate-50"
+                  }`}
+                  key={aspectRatio.value}
+                  type="button"
+                  onClick={() => setSelectedAspectRatio(aspectRatio.value)}
+                >
+                  {aspectRatio.label}
                 </button>
               ))}
             </div>
@@ -2017,7 +2107,7 @@ function CreateView({
               <span className="text-slate-500">预计消耗</span>
               <span className="text-lg font-semibold">{pointCost} 点</span>
             </div>
-            <p className="mt-2 text-xs text-slate-500">1K 每张 10 点，2K 每张 20 点。提交后会先预扣，失败任务会退款。</p>
+            <p className="mt-2 text-xs text-slate-500">1K 每张 10 点，2K 每张 20 点，4K 每张 40 点。提交后会先预扣，失败任务会退款。</p>
           </div>
 
           {message ? <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">{message}</p> : null}
@@ -2548,7 +2638,7 @@ function AdminTemplatesView({
           </label>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <label className="grid gap-2 text-sm font-medium">
             <span>张数</span>
             <input
@@ -2570,6 +2660,21 @@ function AdminTemplatesView({
             >
               <option value="1k">1K</option>
               <option value="2k">2K</option>
+              <option value="4k">4K</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            <span>尺寸</span>
+            <select
+              className="h-10 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-950"
+              defaultValue={defaults?.aspectRatio ?? "1:1"}
+              name="aspectRatio"
+            >
+              {aspectRatios.map((aspectRatio) => (
+                <option key={aspectRatio.value} value={aspectRatio.value}>
+                  {aspectRatio.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="grid gap-2 text-sm font-medium">
@@ -2674,6 +2779,7 @@ function AdminTemplatesView({
                       <span className="rounded-full bg-slate-100 px-2 py-1">{getPresetMeta(recipe.preset).title}</span>
                       <span className="rounded-full bg-slate-100 px-2 py-1">{recipe.imageCount} 张</span>
                       <span className="rounded-full bg-slate-100 px-2 py-1">{recipe.resolution.toUpperCase()}</span>
+                      <span className="rounded-full bg-slate-100 px-2 py-1">{getAspectRatioLabel(recipe.aspectRatio)}</span>
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
@@ -3245,7 +3351,7 @@ function readFileAsDataUri(file: File) {
 }
 
 function getResolutionPointCost(resolution: Resolution) {
-  return resolution === "2k" ? 20 : 10;
+  return resolution === "4k" ? 40 : resolution === "2k" ? 20 : 10;
 }
 
 function readTemplateRecipe(template: { defaultParams: Record<string, unknown> }) {
@@ -3263,6 +3369,7 @@ function readTemplateRecipe(template: { defaultParams: Record<string, unknown> }
     preset: normalizedPreset,
     imageCount,
     resolution: readResolution(params),
+    aspectRatio: readAspectRatio(params),
     mainStyleId,
     extraPrompt: typeof params.extraPrompt === "string" ? params.extraPrompt : "",
     tags: Array.isArray(params.tags) ? params.tags.filter((tag): tag is string => typeof tag === "string") : [],
@@ -3302,7 +3409,17 @@ function formatTemplateCategory(category: Exclude<TemplateCategory, "all">) {
 }
 
 function readResolution(params: Record<string, unknown>): Resolution {
-  return params.resolution === "2k" ? "2k" : "1k";
+  return params.resolution === "4k" ? "4k" : params.resolution === "2k" ? "2k" : "1k";
+}
+
+function readAspectRatio(params: Record<string, unknown>): AspectRatio {
+  return aspectRatios.some((aspectRatio) => aspectRatio.value === params.aspectRatio)
+    ? (params.aspectRatio as AspectRatio)
+    : "1:1";
+}
+
+function getAspectRatioLabel(value: AspectRatio) {
+  return aspectRatios.find((aspectRatio) => aspectRatio.value === value)?.label ?? "1:1";
 }
 
 function readGenerationPreset(params: Record<string, unknown>): GenerationPreset {

@@ -21,6 +21,45 @@ import type {
 } from "@ai-image/shared";
 import { apiRequest } from "../../lib/api";
 
+type Resolution = "1k" | "2k" | "4k";
+type AspectRatio =
+  | "auto"
+  | "1:1"
+  | "3:2"
+  | "2:3"
+  | "4:3"
+  | "3:4"
+  | "5:4"
+  | "4:5"
+  | "16:9"
+  | "9:16"
+  | "2:1"
+  | "1:2"
+  | "3:1"
+  | "1:3"
+  | "21:9"
+  | "9:21";
+
+const resolutions: Resolution[] = ["1k", "2k", "4k"];
+const aspectRatios: Array<{ label: string; value: AspectRatio }> = [
+  { label: "Auto", value: "auto" },
+  { label: "1:1", value: "1:1" },
+  { label: "3:2", value: "3:2" },
+  { label: "2:3", value: "2:3" },
+  { label: "4:3", value: "4:3" },
+  { label: "3:4", value: "3:4" },
+  { label: "5:4", value: "5:4" },
+  { label: "4:5", value: "4:5" },
+  { label: "16:9", value: "16:9" },
+  { label: "9:16", value: "9:16" },
+  { label: "2:1", value: "2:1" },
+  { label: "1:2", value: "1:2" },
+  { label: "3:1", value: "3:1" },
+  { label: "1:3", value: "1:3" },
+  { label: "21:9", value: "21:9" },
+  { label: "9:21", value: "9:21" }
+];
+
 export function TemplatesClient() {
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -77,7 +116,6 @@ export function TemplatesClient() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const pointCost = Number(formData.get("pointCost") || 10);
 
     try {
       const result = await apiRequest<CreateGenerationTaskResponse>(`/api/templates/${selectedTemplate.id}/remix`, {
@@ -85,8 +123,11 @@ export function TemplatesClient() {
         body: JSON.stringify({
           prompt: formData.get("prompt") || undefined,
           negativePrompt: formData.get("negativePrompt") || undefined,
-          pointCost,
-          params: selectedTemplate.defaultParams
+          params: {
+            ...selectedTemplate.defaultParams,
+            resolution: formData.get("resolution"),
+            aspectRatio: formData.get("aspectRatio")
+          }
         })
       });
 
@@ -180,7 +221,7 @@ export function TemplatesClient() {
           </div>
 
           {selectedTemplate ? (
-            <form className="mt-4" onSubmit={remixTemplate}>
+            <form className="mt-4" key={selectedTemplate.id} onSubmit={remixTemplate}>
               <div className="rounded-md border border-border bg-muted p-3">
                 <div className="text-sm font-semibold">{selectedTemplate.title}</div>
                 <div className="mt-2 line-clamp-4 text-sm text-muted-foreground">{selectedTemplate.prompt}</div>
@@ -206,18 +247,40 @@ export function TemplatesClient() {
                 />
               </label>
 
-              <label className="mt-4 grid gap-2 text-sm font-medium">
-                <span>点数成本</span>
-                <input
-                  className="h-10 rounded-md border border-border px-3 outline-none focus:border-primary"
-                  defaultValue="10"
-                  max="10000"
-                  min="1"
-                  name="pointCost"
-                  required={true}
-                  type="number"
-                />
-              </label>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="grid gap-2 text-sm font-medium">
+                  <span>清晰度</span>
+                  <select
+                    className="h-10 rounded-md border border-border px-3 outline-none focus:border-primary"
+                    defaultValue={readResolution(selectedTemplate.defaultParams)}
+                    name="resolution"
+                  >
+                    {resolutions.map((resolution) => (
+                      <option key={resolution} value={resolution}>
+                        {resolution.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-2 text-sm font-medium">
+                  <span>尺寸</span>
+                  <select
+                    className="h-10 rounded-md border border-border px-3 outline-none focus:border-primary"
+                    defaultValue={readAspectRatio(selectedTemplate.defaultParams)}
+                    name="aspectRatio"
+                  >
+                    {aspectRatios.map((aspectRatio) => (
+                      <option key={aspectRatio.value} value={aspectRatio.value}>
+                        {aspectRatio.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-4 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                点数会按所选清晰度和模板张数自动预扣。
+              </div>
 
               <div className="mt-4 flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-sm">
                 <span className="inline-flex items-center gap-2 font-medium">
@@ -273,4 +336,14 @@ function TemplatePreview({ index, template }: { index: number; template: Templat
 function readParam(params: Record<string, unknown>, key: string, fallback: string) {
   const value = params[key];
   return typeof value === "string" || typeof value === "number" ? String(value) : fallback;
+}
+
+function readResolution(params: Record<string, unknown>): Resolution {
+  return params.resolution === "4k" ? "4k" : params.resolution === "2k" ? "2k" : "1k";
+}
+
+function readAspectRatio(params: Record<string, unknown>): AspectRatio {
+  return aspectRatios.some((aspectRatio) => aspectRatio.value === params.aspectRatio)
+    ? (params.aspectRatio as AspectRatio)
+    : "1:1";
 }

@@ -147,12 +147,13 @@ export class TemplatesService {
     const preset = this.normalizePreset(record.preset);
     const category = this.normalizeCategory(record.category, preset);
     const imageCount = this.normalizeImageCount(record.imageCount, preset);
-    const resolution = record.resolution === "2k" ? "2k" : "1k";
+    const resolution = record.resolution === "4k" ? "4k" : record.resolution === "2k" ? "2k" : "1k";
     const defaultParams: Record<string, Prisma.InputJsonValue> = {
       category,
       preset,
       imageCount,
       resolution,
+      aspectRatio: this.normalizeAspectRatio(record.aspectRatio),
       tags: this.normalizeTags(record.tags),
       extraPrompt: this.normalizeOptionalUnknownText(record.extraPrompt, 1000) ?? "",
       previewUrl: this.normalizePreviewUrl(record.previewUrl)
@@ -199,6 +200,29 @@ export class TemplatesService {
     }
 
     return imageCount;
+  }
+
+  private normalizeAspectRatio(value: unknown) {
+    const allowedAspectRatios = new Set([
+      "auto",
+      "1:1",
+      "3:2",
+      "2:3",
+      "4:3",
+      "3:4",
+      "5:4",
+      "4:5",
+      "16:9",
+      "9:16",
+      "2:1",
+      "1:2",
+      "3:1",
+      "1:3",
+      "21:9",
+      "9:21"
+    ]);
+
+    return typeof value === "string" && allowedAspectRatios.has(value) ? value : "1:1";
   }
 
   private normalizeMainStyleId(value: unknown) {
