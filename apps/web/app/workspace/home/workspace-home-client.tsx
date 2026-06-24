@@ -121,6 +121,7 @@ const aspectRatios: Array<{ label: string; value: AspectRatio }> = [
   { label: "9:21", value: "9:21" }
 ];
 const taskStatuses: Array<GenerationStatus | "all"> = ["all", "queued", "processing", "succeeded", "refunded", "failed"];
+const generationTaskPollOffsetsMs = [40000, 50000, 60000, 70000, 80000, 90000, 100000];
 const templateCategories: Array<{ id: TemplateCategory; label: string }> = [
   { id: "all", label: "全部" },
   { id: "suite", label: "商品套图" },
@@ -243,6 +244,9 @@ export function WorkspaceHomeClient() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittingUserId, setSubmittingUserId] = useState<string | null>(null);
+  const liveTaskSignatureRef = useRef("");
+  const liveTaskPollStartedAtRef = useRef(0);
+  const nextLiveTaskPollIndexRef = useRef(0);
 
   const isAdmin = user?.role === "admin";
   const pointCost = getResolutionPointCost(selectedResolution) * imageCount;
@@ -331,15 +335,64 @@ export function WorkspaceHomeClient() {
   }, [activeView]);
 
   useEffect(() => {
-    if (!tasks.some((task) => task.status === "queued" || task.status === "processing")) {
+    const liveTaskSignature = tasks
+      .filter((task) => task.status === "queued" || task.status === "processing")
+      .map((task) => task.id)
+      .sort()
+      .join("|");
+
+    if (!liveTaskSignature) {
+      liveTaskSignatureRef.current = "";
+      liveTaskPollStartedAtRef.current = 0;
+      nextLiveTaskPollIndexRef.current = 0;
       return;
     }
 
-    const timer = window.setInterval(() => {
-      void loadWorkspace({ quiet: true });
-    }, 5000);
+    if (liveTaskSignatureRef.current !== liveTaskSignature) {
+      liveTaskSignatureRef.current = liveTaskSignature;
+      liveTaskPollStartedAtRef.current = Date.now();
+      nextLiveTaskPollIndexRef.current = 0;
+    }
 
-    return () => window.clearInterval(timer);
+    const refreshWhenVisible = () => {
+      if (!document.hidden) {
+        void loadWorkspace({ quiet: true });
+      }
+    };
+
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    if (document.hidden) {
+      return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
+    }
+
+    const elapsedMs = Date.now() - liveTaskPollStartedAtRef.current;
+
+    while (
+      nextLiveTaskPollIndexRef.current < generationTaskPollOffsetsMs.length &&
+      generationTaskPollOffsetsMs[nextLiveTaskPollIndexRef.current] <= elapsedMs
+    ) {
+      nextLiveTaskPollIndexRef.current += 1;
+    }
+
+    const nextPollOffsetMs = generationTaskPollOffsetsMs[nextLiveTaskPollIndexRef.current];
+
+    if (nextPollOffsetMs === undefined) {
+      return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
+    }
+
+    const timer = window.setTimeout(
+      () => {
+        nextLiveTaskPollIndexRef.current += 1;
+        void loadWorkspace({ quiet: true });
+      },
+      Math.max(0, nextPollOffsetMs - elapsedMs)
+    );
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [tasks]);
 
   useEffect(() => {

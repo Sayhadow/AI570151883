@@ -136,8 +136,8 @@ export class GenerationTasksService implements OnModuleDestroy {
         maxRetriesPerRequest: null
       },
       defaultJobOptions: {
-        removeOnComplete: 100,
-        removeOnFail: 100
+        removeOnComplete: { age: 3600, count: 50 },
+        removeOnFail: { age: 86400, count: 100 }
       }
     });
   }
