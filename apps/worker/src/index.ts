@@ -17,7 +17,7 @@ loadRootEnv();
 
 const prisma = new PrismaClient();
 const assetStorage = createAssetStorageFromEnv();
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+const redisUrl = process.env.REDIS_QUEUE_URL ?? process.env.REDIS_URL ?? "redis://localhost:6379";
 const queueName = process.env.GENERATION_QUEUE_NAME ?? GENERATION_QUEUE_NAME;
 const parsedRedisUrl = new URL(redisUrl);
 const workerConcurrency = normalizePositiveInteger(process.env.WORKER_CONCURRENCY, 2);

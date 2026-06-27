@@ -123,7 +123,7 @@ export class GenerationTasksService implements OnModuleDestroy {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(PointsService) private readonly pointsService: PointsService
   ) {
-    const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+    const redisUrl = process.env.REDIS_QUEUE_URL ?? process.env.REDIS_URL ?? "redis://localhost:6379";
     const parsedRedisUrl = new URL(redisUrl);
 
     this.queue = new Queue<GenerationTaskPayload>(process.env.GENERATION_QUEUE_NAME ?? GENERATION_QUEUE_NAME, {
