@@ -48,14 +48,22 @@ GENERATED_ASSET_DIR=.generated-assets
 
 ## 3. Redis
 
-The generation queue uses BullMQ, so production needs Redis. Upstash Redis is a simple hosted option.
+The generation queue uses BullMQ, which is command-heavy and should use a persistent Redis service such as Railway Redis. Use Upstash Redis only for lightweight rate limiting or short-lived cache keys.
 
-Set the same value on both API and worker:
+Set these values on both API and worker:
 
 ```text
-REDIS_URL=redis://default:<password>@<host>:<port>
+REDIS_QUEUE_URL=redis://default:<password>@<railway-redis-private-host>:6379
 GENERATION_QUEUE_NAME=generation
 ```
+
+Set this value on the API:
+
+```text
+RATE_LIMIT_REDIS_URL=rediss://default:<password>@<upstash-host>:6379
+```
+
+`REDIS_URL` is still supported as a fallback for local development and older environments, but production should prefer the dedicated variables above.
 
 ## 4. API runtime
 
@@ -77,7 +85,8 @@ API_PORT=4000
 API_BODY_LIMIT=10mb
 WEB_ORIGIN=https://sayhadowai.com
 DATABASE_URL=<supabase-postgres-url>
-REDIS_URL=<redis-url>
+REDIS_QUEUE_URL=<railway-redis-url>
+RATE_LIMIT_REDIS_URL=<upstash-redis-url>
 SESSION_SECRET=<long-random-secret>
 ASSET_STORAGE_DRIVER=s3
 S3_ENDPOINT=<s3-endpoint>
